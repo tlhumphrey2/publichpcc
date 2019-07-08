@@ -1,0 +1,17 @@
+instance_ids=$ThisDir/instance_ids.txt
+private_ips=$ThisDir/private_ips.txt
+public_ips=$ThisDir/public_ips.txt
+nodetypes=$ThisDir/nodetypes.txt
+created_environment_file=/etc/HPCCSystems/source/newly_created_environment.xml
+bucket_name=tlhumphrey
+roxienodes=0
+slavesPerNode=3
+region=us-west-2
+stackname=hpcc-150724-1
+UserNameAndPassword=
+ToS3Bucket=s3://hpcc-150724-1-backup
+non_support_instances=2
+pem=$ThisDir/tlh_keys_us_west_2.pem
+supportnodes=1
+HPCCPlatform=http://cdn.hpccsystems.com/releases/CE-Candidate-5.2.4/bin/platform/hpccsystems-platform-community-with-plugins_5.2.4-1.el6.x86_64.rpm
+CopyLZFiles=1

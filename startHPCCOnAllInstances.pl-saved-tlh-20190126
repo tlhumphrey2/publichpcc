@@ -1,0 +1,76 @@
+#!/usr/bin/perl
+$ThisDir=($0=~/^(.*)\//)? $1 : ".";
+require "$ThisDir/getConfigurationFile.pl";
+require "$ThisDir/common.pl";
+print "In startHPCCOnAllInstances.pl. pem=\"$pem\"\n";
+my @terminated=grep(/terminate/,@State);
+exit if ($ThisClusterComponent ne 'Master') && (scalar(@terminated)==0);
+
+# If there is an EIP, associate it with the master instance, i.e. 1st instance id in $instance_ids.
+if ( ($ThisClusterComponent eq 'Master') && ($EIP =~ /^eipalloc-[a-z0-9]+$/) ){
+  my $MasterInstanceId=`head -1 $instance_ids`;chomp $MasterInstanceId;
+  print "aws ec2 associate-address --instance-id $MasterInstanceId --allocation-id $EIP --region $region\n";
+  my $rc=`aws ec2 associate-address --instance-id $MasterInstanceId --allocation-id $EIP --region $region`;
+  print "associate-address rc=\"$rc\"\n";
+}
+
+$mountDisks=0;
+# Any command line arguments is a sign that disks need to be mounted.
+if ( scalar(@ARGV) > 0 ){
+  $mountDisks=1;
+}
+
+# Get all private_ips
+$master_ip='';
+open(IN,$private_ips) || die "Can't open for input: \"$private_ips\"\n";
+while(<IN>){
+   next if /^\s*$/;
+   chomp;
+   $esp = $_ if $. == 1;
+   $master_ip = $_ if $master_ip=~/^\s*$/;
+   push @private_ips, $_;
+}
+close(IN);
+
+print("chmod 400 $pem\n");
+system("chmod 400 $pem");
+
+# --------------------------------- The following is commented out by tlh, 20190124.
+=pod
+for( my $i=$#private_ips; $i >= 0; $i--){ 
+  my $ip=$private_ips[$i];
+  if ( $mountDisks ){
+    print("ssh -o StrictHostKeyChecking=no -t -t -i $pem $sshuser\@$ip \"sudo mount /dev/md127 /var/lib/HPCCSystems\"\n");
+    system("ssh -o StrictHostKeyChecking=no -t -t -i $pem $sshuser\@$ip \"sudo mount /dev/md127 /var/lib/HPCCSystems\"");
+  }
+}
+
+if (( $supportnodes <= 1 ) && ( $non_support_instances <= 1 )){
+  print "Since there is only one instance, sleep 10 seconds before starting cluster.\n";
+  sleep 10;
+}
+=cut
+# --------------------------------- END The following is commented out by tlh, 20190124.
+
+
+if ($ThisClusterComponent eq 'Master'){
+  print("sudo /opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init start\n");
+  system("sudo /opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init start");
+}
+else{
+  # Check to see if hpcc-run.sh is running on the master
+  print "ssh -o StrictHostKeyChecking=no -t -i $pem $sshuser\@$master_ip \"ps -C hpcc-run.sh\"\n";
+  my $ps=`ssh -o StrictHostKeyChecking=no -t -i $pem $sshuser\@$master_ip "ps -C hpcc-run.sh"`;
+  print "ps returned: ps=\"$ps\"\n";
+  
+  # Check to see if the last line of cfg_BestHPCC.sh is "AutoscalingActivated=1" on the master
+  print "ssh -o StrictHostKeyChecking=no -t -i $pem $sshuser\@$master_ip \"tail -3 /home/$sshuser/cfg_BestHPCC.sh\"\n";
+  my $cfg_BestHPCC_lastline=`ssh -o StrictHostKeyChecking=no -t -i $pem $sshuser\@$master_ip "tail -3 /home/$sshuser/cfg_BestHPCC.sh"`;
+  print "ps returned: ps=\"$ps\"\n";
+  print "cfg_BestHPCC_lastline=\"$cfg_BestHPCC_lastline\"\n";
+  
+  if (($ps !~ /hpcc-run\.sh/s) && ($cfg_BestHPCC_lastline =~ /Completed HPCC start/s)){
+    print("ssh -o StrictHostKeyChecking=no -t -t -i $pem $sshuser\@$master_ip \"sudo \/opt\/HPCCSystems\/sbin\/hpcc-run.sh -a hpcc-init start\"\n");
+    system("ssh -o StrictHostKeyChecking=no -t -t -i $pem $sshuser\@$master_ip \"sudo \/opt\/HPCCSystems\/sbin\/hpcc-run.sh -a hpcc-init start\"");
+  }
+}
