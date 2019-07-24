@@ -25,7 +25,7 @@ $resource_id,$region,research,research,research,$stackname,$resource_type,dev,ti
 4. Then I put these in a file called ResourceAndRequiredTags.csv, where the 1st line of the file is the following:
 resource_id,region,market,product,application,project,service,lifecycle,owner_email,support_email
 5. The last thing I do is call tag-resources.pl to add the required tags to all resources. This call looks like:
-$ThisDir/tag-resources.pl ResourceAndRequiredTags.csv
+$ThisDir/tag-resources.pl $ThisDir/ResourceAndRequiredTags.csv
 =cut
 
 #require "$ThisDir/getConfigurationFile.pl";
@@ -77,8 +77,8 @@ print OUT join("\n",@ResourceAndRequiredTags),"\n";
 close(OUT);
 
 # 5. The last thing to do is call tag-resources.pl to add the required tags to all resources. This call looks like:
-print "In getResourceIdsAndTagWithRequired.pl: $ThisDir/tag-resources.pl ResourceAndRequiredTags.csv\n";
-$_=`$ThisDir/tag-resources.pl ResourceAndRequiredTags.csv`;
+print "In getResourceIdsAndTagWithRequired.pl: $ThisDir/tag-resources.pl $ThisDir/ResourceAndRequiredTags.csv\n";
+$_=`$ThisDir/tag-resources.pl $ThisDir/ResourceAndRequiredTags.csv`;
 print "In getResourceIdsAndTagWithRequired.pl: RC of tag-resources.pl is \"$_\"\n";
 #============================================
 sub GroupIdReplacedWithSG{
