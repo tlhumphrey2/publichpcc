@@ -131,7 +131,7 @@ foreach (@key){
   #print "DEBUG: aws ec2 create-tags --region $region --resources $resource_id --tags $tags\n";
   `aws ec2 create-tags --region $region --resources $resource_id --tags $tags &> create-tag-output.txt`;
   my $output=`cat create-tag-output.txt`;
-  print "\"aws ec2 create-tags --region $region\" output=\"$output\"\n";
+  print "\"aws ec2 create-tags --region $region --resources $resource_id:\" rc=\"$output\"\n";
   $tags='';
 }
 #=============================================
