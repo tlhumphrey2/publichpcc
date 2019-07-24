@@ -35,13 +35,14 @@ $ThisDir/tag-resources.pl $ThisDir/ResourceAndRequiredTags.csv
 my $stackname=shift @ARGV;
 my $region=shift @ARGV;
 
+$instance_descriptions_file="$ThisDir/tagging-$stackname-instance-descriptions.json";
 # 1. Uses describe-instances, filtering on $stackname, get descriptions of all instances
-print "In getResourceIdsAndTagWithRequired.pl: aws ec2 describe-instances --region $region --filter \"Name=tag:StackName,Values=$stackname\".\n";
-$_=`aws ec2 describe-instances --region $region --filter "Name=tag:StackName,Values=$stackname" > $ThisDir/$stackname-instance-descriptions.json`;
+print "In getResourceIdsAndTagWithRequired.pl: aws ec2 describe-instances --region $region --filter \"Name=tag:StackName,Values=$stackname\" > $instance_descriptions_file\n";
+$_=`aws ec2 describe-instances --region $region --filter "Name=tag:StackName,Values=$stackname" > $instance_descriptions_file`;
 
 # 2. Then we do the following to 1) get only lines that contain resource IDs, 2) sort then and 3) remove everything but the resource type and the resource IDs(separated by a comma)
 print "In getResourceIdsAndTagWithRequired.pl: From instance descriptions remove everything but resource types and resource ids.\n";
-$_=`cat $stackname-instance-descriptions.json`;
+$_=`cat $instance_descriptions_file`;
 my @idline=split(/\n/,$_);
 @idline=grep(/Id\":/,@idline);
 @idline=grep(!/\"RequesterId\":|\"ReservationId\":|\"OwnerId\":|\"AttachmentId\":|\"ImageId\":|\"Id\":|\"IpOwnerId\":/,@idline);
