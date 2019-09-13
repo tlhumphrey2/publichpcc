@@ -136,9 +136,9 @@ foreach my $cfgvar (sort keys %ValueOfCfgVariable){
       my $base_version = $1 if $version =~ /^(\d+\.\d+\.\d+)(?:-\w+)?/;# examples: 6.2.4-3 or 7.0.0-rc3
       $First2Digits = $1 if $base_version =~ /^(\d+\.\d+)/;
 
-      my $platformpath="http://cdn.hpccsystems.com/releases/CE-Candidate-<base_version>/bin/platform";   
+      # OLD FORMAT BEFORE 20190829: my $platformpath="http://cdn.hpccsystems.com/releases/CE-Candidate-<base_version>/bin/platform";   
+      my $platformpath="https://d2wulyp08c6njk.cloudfront.net/releases/CE-Candidate-<base_version>/bin/platform";   
       if ( $First2Digits>=6.0 ){
-        $platformpath="http://wpc.423A.rhocdn.net/00423A/releases/CE-Candidate-<base_version>/bin/platform";
 	if ( $First2Digits<7.0 ){
 	  print OUT "IsPlatformSix=1\n";
 	  $IsPlatformSix=1;

@@ -42,7 +42,7 @@ cd hpcc
 echo "wget $HPCCPlatform"
 wget $HPCCPlatform
 
-if [ "$IsPlatformSixOrHigher" -eq 1 ];then
+if [ "$IsPlatformSixOrHigher" -eq "1" ];then
  if [ "$IsPlatformSix" == "" ];then
    echo "$ThisDir/install-devtools2-and-libstdc.sh"
    $ThisDir/install-devtools2-and-libstdc.sh
