@@ -248,6 +248,12 @@ sub sendMail{
 my ($from, $to, $subject, $body, $to_filepath, $email_filepath)=@_;
 print "Entering sendMail. from=\"$from\", to=\"$to\", subject=\"$subject\", body=\"$body\", to_filepath=\"$to_filepath\", email_filepath=\"$email_filepath\"\n";
 
+if ( $body =~ /Cluster, mhpcc-/ ){
+  print "In sendMail. NOT SENDING MAIL because this is a Managed Cluster. So, all information conveyed through Web App.\n";
+  print "RETURNING\n";
+  return 0
+}
+
 my $email_json=<<EOFF1;
 {
   "Subject": {
