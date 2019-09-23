@@ -393,6 +393,7 @@
 "InstanceType" : {
 "Ref" : "BastionInstanceType"
 },
+"KeyName" : "tlh_keys_us_east_2",
 "NetworkInterfaces": [ {
 "AssociatePublicIpAddress": "true",
 "DeviceIndex": "0",
@@ -549,7 +550,7 @@
 "Fn::Join" : [
 "", 
 [
-"cat \"",
+"echo \"",
 { "Ref": "HPCCManagedServiceIP" },
 "\" > /home/$sshuser/managed-service-ip.txt" 
 ]
@@ -843,7 +844,7 @@
 "Fn::Join" : [
 "", 
 [
-"cat \"",
+"echo \"",
 { "Ref": "HPCCManagedServiceIP" },
 "\" > /home/$sshuser/managed-service-ip.txt" 
 ]
@@ -1126,7 +1127,7 @@
 "Fn::Join" : [
 "", 
 [
-"cat \"",
+"echo \"",
 { "Ref": "HPCCManagedServiceIP" },
 "\" > /home/$sshuser/managed-service-ip.txt" 
 ]
@@ -1415,7 +1416,7 @@
 "Fn::Join" : [
 "", 
 [
-"cat \"",
+"echo \"",
 { "Ref": "HPCCManagedServiceIP" },
 "\" > /home/$sshuser/managed-service-ip.txt" 
 ]
