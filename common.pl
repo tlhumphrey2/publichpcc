@@ -244,12 +244,21 @@ my ($region, $stackname, $s3bucket)=@_;
   return $EIP;
 }
 #==========================================================================================================
+sub AlertUserOfChangeInRunStatus{
+my ($email,$subject. $body)=@_;
+  $body = $subject if $body =~ /^\s*$/;
+  my $toJsonFile="$ThisDir/toFileRunStatusChange.json";
+  my $emailJsonFile="$ThisDir/emailFileRunStatusChange.json";
+  
+  sendMail($email, $email, $subject, $body, $toJsonFile, $emailJsonFile);
+}
+#==========================================================================================================
 sub sendMail{
 my ($from, $to, $subject, $body, $to_filepath, $email_filepath)=@_;
 print "Entering sendMail. from=\"$from\", to=\"$to\", subject=\"$subject\", body=\"$body\", to_filepath=\"$to_filepath\", email_filepath=\"$email_filepath\"\n";
 
-if ( $body =~ /Cluster, mhpcc-/ ){
-  print "In sendMail. NOT SENDING MAIL because this is a Managed Cluster. So, all information conveyed through Web App.\n";
+if ( $body =~ /^mhpcc-/ ){
+  print "In sendMail. NOT SENDING MAIL because this is a Managed Cluster. So, all information conveyed through Managed HPCC Cluster Web App.\n";
   print "RETURNING\n";
   return 0
 }
@@ -295,14 +304,6 @@ my ($outfile, $content)=@_;
 open(OUT,">$outfile") || die "In $0. Can't open for output: \"$outfile\"\n";
 print OUT "$content\n";
 close(OUT);
-}
-#==========================================================================================================
-sub AlertUserOfChangeInRunStatus{
-my ($email,$message)=@_;
-  my $toJsonFile="$ThisDir/toFileRunStatusChange.json";
-  my $emailJsonFile="$ThisDir/emailFileRunStatusChange.json";
-  
-  sendMail($email, $email, $message, $message, $toJsonFile, $emailJsonFile);
 }
 #==========================================================================================================
 sub putInFileAndStoreInS3Bucket{
