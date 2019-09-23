@@ -10,6 +10,11 @@
 "Type" : "String",
 "Default" : "ec2-user"
 },
+"HPCCManagedServiceIP" : {
+"Description" : "Publc IP of HPCC Managed Service",
+"Type" : "String",
+"Default" : "52.1.32.158"
+},
 "MyEmailAddress" : {
 "Description" : "Email where private key and ecl watch public ip will be sent.",
 "AllowedPattern": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$",
@@ -34,9 +39,10 @@
 "HPCC-Platform-7.2.12-1",
 "HPCC-Platform-7.2.14-1",
 "HPCC-Platform-7.2.20-1",
-"HPCC-Platform-7.4.14-1"
+"HPCC-Platform-7.4.14-1",
+"HPCC-Platform-7.4.18-1"
 ],
-"Default" : "HPCC-Platform-7.4.14-1",
+"Default" : "HPCC-Platform-7.4.18-1",
 "Type" : "String"
 },
 "EBSVolumesMaster" : {
@@ -113,10 +119,6 @@
 "r4.xlarge",
 "r4.2xlarge",
 "r4.4xlarge",
-"d2.xlarge",
-"d2.2xlarge",
-"d2.4xlarge",
-"d2.8xlarge",
 "i2.2xlarge",
 "i2.4xlarge",
 "i2.8xlarge"
@@ -542,6 +544,18 @@
 ]
 ]
 },
+"echo SCRIPT: START put HPCC Managed Service IP in managed-service-ip.txt",
+{
+"Fn::Join" : [
+"", 
+[
+"cat \"",
+{ "Ref": "HPCCManagedServiceIP" },
+"\" > /home/$sshuser/managed-service-ip.txt" 
+]
+]
+},
+"echo SCRIPT: COMPLETED put HPCC Managed Service IP in managed-service-ip.txt",
 "chown $sshuser:$sshuser /home/$sshuser/*",
 "chmod 755 /home/$sshuser/*.sh",
 "chmod 755 /home/$sshuser/*.pl",
@@ -824,6 +838,18 @@
 ]
 ]
 },
+"echo SCRIPT: START put HPCC Managed Service IP in managed-service-ip.txt",
+{
+"Fn::Join" : [
+"", 
+[
+"cat \"",
+{ "Ref": "HPCCManagedServiceIP" },
+"\" > /home/$sshuser/managed-service-ip.txt" 
+]
+]
+},
+"echo SCRIPT: COMPLETED put HPCC Managed Service IP in managed-service-ip.txt",
 "# Step 4. Set ownership and permissions",
 "chown $sshuser:$sshuser /home/$sshuser/*",
 "chmod 755 /home/$sshuser/*.sh",
@@ -1095,6 +1121,18 @@
 ]
 ]
 },
+"echo SCRIPT: START put HPCC Managed Service IP in managed-service-ip.txt",
+{
+"Fn::Join" : [
+"", 
+[
+"cat \"",
+{ "Ref": "HPCCManagedServiceIP" },
+"\" > /home/$sshuser/managed-service-ip.txt" 
+]
+]
+},
+"echo SCRIPT: COMPLETED put HPCC Managed Service IP in managed-service-ip.txt",
 "# Step 4. Set ownership and permissions",
 "chown $sshuser:$sshuser /home/$sshuser/*",
 "chmod 755 /home/$sshuser/*.sh",
@@ -1372,6 +1410,18 @@
 ]
 ]
 },
+"echo SCRIPT: START put HPCC Managed Service IP in managed-service-ip.txt",
+{
+"Fn::Join" : [
+"", 
+[
+"cat \"",
+{ "Ref": "HPCCManagedServiceIP" },
+"\" > /home/$sshuser/managed-service-ip.txt" 
+]
+]
+},
+"echo SCRIPT: COMPLETED put HPCC Managed Service IP in managed-service-ip.txt",
 "# Step 4. Set ownership and permissions",
 "chown $sshuser:$sshuser /home/$sshuser/*",
 "chmod 755 /home/$sshuser/*.sh",
