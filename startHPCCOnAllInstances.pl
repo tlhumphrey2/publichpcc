@@ -34,7 +34,7 @@ if ($ThisClusterComponent eq 'Master'){
   print "In $0 after calling getMasterEIP. EIP=\"$EIP\".\n";
 
   my $message=checkStatusOfCluster($stackname,$EIP);
-  AlertUserOfChangeInRunStatus($email, $message);
+  AlertUserOfChangeInRunStatus($email, $stackname, $message);
 }
 # If this isn't a Master (i.e. thor or roxie) and no instances have been terminated (i.e. initial launch).
 elsif (($ThisClusterComponent ne 'Master') && ($terminated_ip eq '')){

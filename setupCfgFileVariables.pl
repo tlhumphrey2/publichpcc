@@ -116,6 +116,10 @@ open(OUT,">>$cfgfile") || die "Can't open for append: \"$cfgfile\"\n";
 use POSIX qw(strftime); my $date = strftime "%m/%d/%Y", localtime;
 print OUT "\n#======================= JUST ADDED VARIABLES ($date) =======================\n";
 
+# Put HPCC Managed Service IP is $cfgfile
+$hmsIP = `cat $ThisDir/managed-service-ip.txt`;chomp $hmsIP;
+print OUT "hmsIP=$hmsIP\n";
+
 my $ThisInstanceIP=`curl http://169.254.169.254/latest/meta-data/local-ipv4`;chomp $ThisInstanceIP;
 print "DEBUG: ThisInstanceIP=$ThisInstanceIP\n";
 print OUT "ThisInstanceIP=$ThisInstanceIP\n";
@@ -219,8 +223,8 @@ if ( $DownedInstanceId!~/^\s*$/ ){
       print "DEBUG: DownedVolumeId=$DownedVolumeId\n";
       print OUT "DownedVolumeId=$DownedVolumeId\n";
 
-      print "In $0: AlertUserOfChangeInRunStatus($email, \"$stackname. $DownedNodeType instance, $DownedInstanceId, has gone down. We are automatically launching another. Will let you know when cluster is ready to use again.\")\n";
-      AlertUserOfChangeInRunStatus($email, "$stackname. $DownedNodeType instance, $DownedInstanceId, has gone down. We are automatically launching another. Will let you know when cluster is ready to use again.");
+      print "In $0: AlertUserOfChangeInRunStatus($email, $stackname, \"$stackname. $DownedNodeType instance, $DownedInstanceId, has gone down. We are automatically launching another. Will let you know when cluster is ready to use again.\")\n";
+      AlertUserOfChangeInRunStatus($email, $stackname, "$stackname. $DownedNodeType instance, $DownedInstanceId, has gone down. We are automatically launching another. Will let you know when cluster is ready to use again.");
 }
 else{
       print "DEBUG: DownedInstanceId=\n";

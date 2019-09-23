@@ -245,23 +245,25 @@ my ($region, $stackname, $s3bucket)=@_;
 }
 #==========================================================================================================
 sub AlertUserOfChangeInRunStatus{
-my ($email,$subject. $body)=@_;
+my ($email, $stackname,$subject. $body)=@_;
   $body = $subject if $body =~ /^\s*$/;
   my $toJsonFile="$ThisDir/toFileRunStatusChange.json";
   my $emailJsonFile="$ThisDir/emailFileRunStatusChange.json";
   
-  sendMail($email, $email, $subject, $body, $toJsonFile, $emailJsonFile);
+  if ( $stackname ~= /^mhpcc-/ ){
+    print("echo \"$stackname: $body\" > $ThisDir/ClusterStatus.txt\n");
+    system("echo \"$stackname: $body\" > $ThisDir/ClusterStatus.txt");
+    print("scp -o stricthostkeychecking=no -i $ThisDir/HMS.pem $ThisDir/ClusterStatus.txt ubuntu\@$hmsIP:/home/ubuntu/ClusterStatus.txt\n";
+    my $rc = `scp -o stricthostkeychecking=no -i $ThisDir/HMS.pem $ThisDir/ClusterStatus.txt ubuntu\@$hmsIP:/home/ubuntu/ClusterStatus.txt`;
+  }
+  else{
+    sendMail($email, $email, $subject, $body, $toJsonFile, $emailJsonFile);
+  }
 }
 #==========================================================================================================
 sub sendMail{
 my ($from, $to, $subject, $body, $to_filepath, $email_filepath)=@_;
 print "Entering sendMail. from=\"$from\", to=\"$to\", subject=\"$subject\", body=\"$body\", to_filepath=\"$to_filepath\", email_filepath=\"$email_filepath\"\n";
-
-if ( $body =~ /^mhpcc-/ ){
-  print "In sendMail. NOT SENDING MAIL because this is a Managed Cluster. So, all information conveyed through Managed HPCC Cluster Web App.\n";
-  print "RETURNING\n";
-  return 0
-}
 
 my $email_json=<<EOFF1;
 {

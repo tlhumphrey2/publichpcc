@@ -27,5 +27,5 @@ $EIP=getMasterEIP($region, $EIPAllocationId);
 print "In $0 after calling getMasterEIP. EIP=\"$EIP\".\n";
 
 $message=checkStatusOfCluster($stackname,$EIP);
-AlertUserOfChangeInRunStatus($email, $message);
+AlertUserOfChangeInRunStatus($email, $stackname, $message);
 
