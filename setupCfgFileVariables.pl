@@ -219,8 +219,8 @@ if ( $DownedInstanceId!~/^\s*$/ ){
       print "DEBUG: DownedVolumeId=$DownedVolumeId\n";
       print OUT "DownedVolumeId=$DownedVolumeId\n";
 
-      print "In $0: AlertUserOfChangeInRunStatus($email, \"$DownedNodeType instance has gone down. We are automatically launching another. Will let you know when cluster is ready to use again.\")\n";
-      AlertUserOfChangeInRunStatus($email, "$DownedNodeType instance has gone down. We are automatically launching another. Will let you know when cluster is ready to use again.");
+      print "In $0: AlertUserOfChangeInRunStatus($email, \"$stackname. $DownedNodeType instance, $DownedInstanceId, has gone down. We are automatically launching another. Will let you know when cluster is ready to use again.\")\n";
+      AlertUserOfChangeInRunStatus($email, "$stackname. $DownedNodeType instance, $DownedInstanceId, has gone down. We are automatically launching another. Will let you know when cluster is ready to use again.");
 }
 else{
       print "DEBUG: DownedInstanceId=\n";
