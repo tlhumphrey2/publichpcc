@@ -250,7 +250,7 @@ my ($email, $stackname, $subject, $body)=@_;
   my $toJsonFile="$ThisDir/toFileRunStatusChange.json";
   my $emailJsonFile="$ThisDir/emailFileRunStatusChange.json";
   
-  if ( $stackname ~= /^mhpcc-/ ){
+  if ( $stackname =~ /^mhpcc-/ ){
     print("echo \"$stackname: $body\" > $ThisDir/ClusterStatus.txt\n");
     system("echo \"$stackname: $body\" > $ThisDir/ClusterStatus.txt");
     print("scp -o stricthostkeychecking=no -i $ThisDir/HMS.pem $ThisDir/ClusterStatus.txt ubuntu\@$hmsIP:/home/ubuntu/ClusterStatus.txt\n";
