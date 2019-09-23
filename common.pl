@@ -245,7 +245,7 @@ my ($region, $stackname, $s3bucket)=@_;
 }
 #==========================================================================================================
 sub AlertUserOfChangeInRunStatus{
-my ($email, $stackname,$subject. $body)=@_;
+my ($email, $stackname, $subject, $body)=@_;
   $body = $subject if $body =~ /^\s*$/;
   my $toJsonFile="$ThisDir/toFileRunStatusChange.json";
   my $emailJsonFile="$ThisDir/emailFileRunStatusChange.json";
