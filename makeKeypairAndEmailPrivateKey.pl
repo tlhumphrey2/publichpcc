@@ -119,12 +119,15 @@ if ($verification_status eq 'Success'){
   print "The email, $destination_email, has been verified.\n";
 }
 
+# Do not send email if HPCC Managed Service is launching this cluster
+if ( $stackname !~ /^mhpcc-/ ){
 #---------------------------------------------------------------------------
 print "In $0. 7. Send an email to the destination email address which contains the private key.\n";
 print "aws ses send-email --from $destination_email --destination file:///home/$sshuser/destination_email.json --message file:///home/$sshuser/private-key-email.json --region us-east-1\n";
 $rc=`aws ses send-email --from $destination_email --destination file:///home/$sshuser/destination_email.json --message file:///home/$sshuser/private-key-email.json --region us-east-1`;
 print "aws ses send-email rc=\"$rc\"\n";
 #---------------------------------------------------------
+}
 sub extractPrivateKey{
 my ($rc)=@_;
 local $_=$rc;

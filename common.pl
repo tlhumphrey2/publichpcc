@@ -250,11 +250,10 @@ my ($email, $stackname, $subject, $body)=@_;
   my $toJsonFile="$ThisDir/toFileRunStatusChange.json";
   my $emailJsonFile="$ThisDir/emailFileRunStatusChange.json";
   
+  # If HPCC Managed Service started this cluster then put message on HMS-Change-Notification SQS Queue
   if ( $stackname =~ /^mhpcc-/ ){
-    print("echo \"$stackname: $body\" > $ThisDir/ClusterStatus.txt\n");
-    system("echo \"$stackname: $body\" > $ThisDir/ClusterStatus.txt");
-    print("scp -o stricthostkeychecking=no -i $ThisDir/HMS.pem $ThisDir/ClusterStatus.txt ubuntu\@$hmsIP:/home/ubuntu/ClusterStatus.txt\n";
-    my $rc = `scp -o stricthostkeychecking=no -i $ThisDir/HMS.pem $ThisDir/ClusterStatus.txt ubuntu\@$hmsIP:/home/ubuntu/ClusterStatus.txt`;
+    print "aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/633162230041/HMS-Change-Notification --message-body $body --delay-seconds 0 --region us-east-1\n";
+   $rc=`aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/633162230041/HMS-Change-Notification --message-body $body --delay-seconds 0 --region us-east-1`;
   }
   else{
     sendMail($email, $email, $subject, $body, $toJsonFile, $emailJsonFile);
