@@ -252,8 +252,8 @@ my ($email, $stackname, $subject, $body)=@_;
   
   # If HPCC Managed Service started this cluster then put message on HMS-Change-Notification SQS Queue
   if ( $stackname =~ /^mhpcc-/ ){
-    print "aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/633162230041/HMS-Change-Notification --message-body \"$body\" --delay-seconds 0 --region us-east-1\n";
-   $rc=`aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/633162230041/HMS-Change-Notification --message-body "$body" --delay-seconds 0 --region us-east-1`;
+    print "aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/633162230041/$stackname --message-body \"$body\" --delay-seconds 0 --region us-east-1\n";
+   $rc=`aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/633162230041/$stackname --message-body "$body" --delay-seconds 0 --region us-east-1`;
   }
   else{
     sendMail($email, $email, $subject, $body, $toJsonFile, $emailJsonFile);
