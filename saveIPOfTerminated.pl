@@ -7,7 +7,7 @@ require "$ThisDir/common.pl";
 
 #==============================================================================
 # If this instance is NOT the master and an instance has terminated then
-#  add terminated_ip and ThisInstanceIP to cfg_BestHPCC.sh
+#  add terminated_ip and ThisInstancePrivateIP to cfg_BestHPCC.sh
 #==============================================================================
 my @terminated=grep(/terminate/,@State);
 print "DEBUG: In saveIPOfTerminated.pl. ThisClusterComponent=\"$ThisClusterComponent\", Size of \@terminated=",scalar(@terminated),"\n";

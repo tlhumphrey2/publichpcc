@@ -112,7 +112,7 @@ else{
 $cfgfile="$ThisDir/cfg_BestHPCC.sh";
 open(OUT,">>$cfgfile") || die "Can't open for append: \"$cfgfile\"\n";
 
-# Get date is \$date.
+# Get date in \$date.
 use POSIX qw(strftime); my $date = strftime "%m/%d/%Y", localtime;
 print OUT "\n#======================= JUST ADDED VARIABLES ($date) =======================\n";
 
@@ -120,9 +120,13 @@ print OUT "\n#======================= JUST ADDED VARIABLES ($date) =============
 $hmsIP = `cat $ThisDir/managed-service-ip.txt`;chomp $hmsIP;
 print OUT "hmsIP=$hmsIP\n";
 
-my $ThisInstanceIP=`curl http://169.254.169.254/latest/meta-data/local-ipv4`;chomp $ThisInstanceIP;
-print "DEBUG: ThisInstanceIP=$ThisInstanceIP\n";
-print OUT "ThisInstanceIP=$ThisInstanceIP\n";
+my $ThisInstanceId =`curl http://169.254.169.254/latest/meta-data/instance-id`;chomp $ThisInstanceId;
+my $ThisInstancePrivateIP =`curl http://169.254.169.254/latest/meta-data/local-ipv4`;chomp $ThisInstancePrivateIP;
+my $ThisInstancePublicIP =`curl http://169.254.169.254/latest/meta-data/public-ipv4`;chomp $ThisInstancePublicIP;
+print "DEBUG: ThisInstancePublicIP=$ThisInstancePublicIP\n";
+print OUT "ThisInstancePublicIP=$ThisInstancePublicIP\n";
+print "DEBUG: ThisInstancePrivateIP=$ThisInstancePrivateIP\n";
+print OUT "ThisInstancePrivateIP=$ThisInstancePrivateIP\n";
 
 foreach my $cfgvar (sort keys %ValueOfCfgVariable){
    if (( $cfgvar eq 'UserNameAndPassword' ) && ( $ValueOfCfgVariable{$cfgvar} ne 'thumphrey/password' ) && ( $ValueOfCfgVariable{$cfgvar} =~ /^\w+\W.+$/ )){
@@ -203,6 +207,8 @@ for( my $i=0; $i < scalar(@sorted_InstanceInfo); $i++){
     $DownedInstanceId=$InstanceVariable{'InstanceId'};
     $DownedNodeType=$InstanceVariable{'Name'};
     $DownedVolumeId=$InstanceVariable{'VolumeId'};
+    # Must get IPs from cfg_BestHPCC.sh which was loaded in a the top of this script
+    ( $DownedPublicIP, $DownedPrivateIP ) = getIPsGiveInstanceId($DownedInstanceId)
   }
   
   foreach my $v (@InstanceVariable){
@@ -223,8 +229,10 @@ if ( $DownedInstanceId!~/^\s*$/ ){
       print "DEBUG: DownedVolumeId=$DownedVolumeId\n";
       print OUT "DownedVolumeId=$DownedVolumeId\n";
 
-      print "In $0: AlertUserOfChangeInRunStatus($email, $stackname, \"$stackname. $DownedNodeType instance, $DownedInstanceId, has gone down. We are automatically launching another. Will let you know when cluster is ready to use again.\")\n";
-      AlertUserOfChangeInRunStatus($email, $stackname, "$stackname. $DownedNodeType instance, $DownedInstanceId, has gone down. We are automatically launching another. Will let you know when cluster is ready to use again.");
+      
+      $body = "$stackname. $DownedNodeType instance, $DownedInstanceId, has gone down. We are automatically launching another, $ThisInstanceId. Will let you know when cluster is ready to use again.";
+      print "In $0: AlertUserOfChangeInRunStatus($region, $email, $stackname, \"$body\")\n";
+      AlertUserOfChangeInRunStatus($region, $email, $stackname, $body);
 }
 else{
       print "DEBUG: DownedInstanceId=\n";
@@ -283,4 +291,19 @@ my $rc=`aws s3 cp s3://$lc_stackname/destination_email $ThisDir/destination_emai
 print "In getEmailFileFromS3Bucket. rc of cp of destination_email file from s3 bucket is \"$rc\"\n";
 my $email=`cat $ThisDir/destination_email`; chomp $email;
 return $email;
+}
+#==============================================================================
+sub getIPsGiveInstanceId{
+my ($InstanceId)=@_;
+  my $public_ip = '';
+  my $private_ip = '';
+  for ( my $i=0; $i < scalar(@InstanceId); $i++){
+     if ( $InstanceId[$i] eq $InstanceId ){
+        $public_ip = $PublicIpAddress[$i];
+        $private_ip = $PrivateIpAddress[$i];
+	last;
+     }
+  }
+  print "In getIPsGiveInstanceId. For InstanceId=\"$InstanceId\", public_ip=\"$public_ip\", private_ip=\"$private_ip\".\n";
+  return ($public_ip, $private_ip);
 }

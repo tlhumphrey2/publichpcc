@@ -245,15 +245,17 @@ my ($region, $stackname, $s3bucket)=@_;
 }
 #==========================================================================================================
 sub AlertUserOfChangeInRunStatus{
-my ($email, $stackname, $subject, $body)=@_;
+my ($region, $email, $stackname, $subject, $body)=@_;
   $body = $subject if $body =~ /^\s*$/;
   my $toJsonFile="$ThisDir/toFileRunStatusChange.json";
   my $emailJsonFile="$ThisDir/emailFileRunStatusChange.json";
   
   # If HPCC Managed Service started this cluster then put message on HMS-Change-Notification SQS Queue
   if ( $stackname =~ /^mhpcc-/ ){
-    print "aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/633162230041/$stackname --message-body \"$body\" --delay-seconds 0 --region us-east-1\n";
-   $rc=`aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/633162230041/$stackname --message-body "$body" --delay-seconds 0 --region us-east-1`;
+    print "aws sqs send-message --queue-url https://sqs.$region.amazonaws.com/633162230041/$stackname --message-body \"$body\" --delay-seconds 0 --region us-east-1\n";
+    $rc=`aws sqs send-message --queue-url https://sqs.$region.amazonaws.com/633162230041/$stackname --message-body "$body" --delay-seconds 0 --region $region`;
+    # For DEBUG we will send email as well as message to sqs queue, $stackname
+    sendMail($email, $email, $subject, $body, $toJsonFile, $emailJsonFile);
   }
   else{
     sendMail($email, $email, $subject, $body, $toJsonFile, $emailJsonFile);

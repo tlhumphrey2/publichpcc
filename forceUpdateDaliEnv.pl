@@ -3,7 +3,7 @@ $ThisDir=($0=~/^(.*)\//)? $1 : ".";
 require "$ThisDir/getConfigurationFile.pl";
 require "$ThisDir/common.pl";
 
-print "Entering $0. On $ThisClusterComponent, whose IP is \"$ThisInstanceIP\"\n";
+print "Entering $0. On $ThisClusterComponent, whose IP is \"$ThisInstancePrivateIP\"\n";
 
 $terminated_ip=shift @ARGV;
 $new_ip=shift @ARGV;
@@ -27,5 +27,5 @@ $EIP=getMasterEIP($region, $EIPAllocationId);
 print "In $0 after calling getMasterEIP. EIP=\"$EIP\".\n";
 
 $message=checkStatusOfCluster($stackname,$EIP);
-AlertUserOfChangeInRunStatus($email, $stackname, $message);
+AlertUserOfChangeInRunStatus($region, $email, $stackname, $message);
 

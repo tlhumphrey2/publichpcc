@@ -33,8 +33,8 @@ if ($ThisClusterComponent eq 'Master'){
   $EIP=getMasterEIP($region, $EIPAllocationId);
   print "In $0 after calling getMasterEIP. EIP=\"$EIP\".\n";
 
-  my $message=checkStatusOfCluster($stackname,$EIP);
-  AlertUserOfChangeInRunStatus($email, $stackname, $message);
+  my $message = checkStatusOfCluster($stackname,$EIP);
+  AlertUserOfChangeInRunStatus($region, $email, $stackname, $message);
 }
 # If this isn't a Master (i.e. thor or roxie) and no instances have been terminated (i.e. initial launch).
 elsif (($ThisClusterComponent ne 'Master') && ($terminated_ip eq '')){
@@ -45,8 +45,8 @@ elsif (($ThisClusterComponent ne 'Master') && ($terminated_ip eq '')){
 elsif (($ThisClusterComponent ne 'Master') && ($terminated_ip ne '')){
    my $MasterIP=`head -1 $private_ips`;chomp $MasterIP;
 
-   # Note. terminated_ip and ThisInstanceIP are in cfg_BestHPCC.sh which is gotten with getConfigurationFile.pl above.
-   print("ssh -o StrictHostKeyChecking=no -i $pem -t -t $sshuser\@$MasterIP \"sudo $ThisDir/forceUpdateDaliEnv.pl $terminated_ip $ThisInstanceIP $ThisClusterComponent\"");
-   my $rc=`ssh -o StrictHostKeyChecking=no -i $pem -t -t $sshuser\@$MasterIP "sudo $ThisDir/forceUpdateDaliEnv.pl $terminated_ip $ThisInstanceIP $ThisClusterComponent"`;
+   # Note. terminated_ip and ThisInstancePrivateIP are in cfg_BestHPCC.sh which is gotten with getConfigurationFile.pl above.
+   print("ssh -o StrictHostKeyChecking=no -i $pem -t -t $sshuser\@$MasterIP \"sudo $ThisDir/forceUpdateDaliEnv.pl $terminated_ip $ThisInstancePrivateIP $ThisClusterComponent\"");
+   my $rc=`ssh -o StrictHostKeyChecking=no -i $pem -t -t $sshuser\@$MasterIP "sudo $ThisDir/forceUpdateDaliEnv.pl $terminated_ip $ThisInstancePrivateIP $ThisClusterComponent"`;
    print "rc=\"$rc\"\n";
 }

@@ -25,8 +25,8 @@ if [ "$ThisClusterComponent" != 'Master' ] && [ "$terminated_ip" != "" ];then
    MasterIP=`head -1 $private_ips`
    echo "ssh -i $pem -t -t $sshuser@$MasterIP \"cat /etc/HPCCSystems/environment.xml\" outputto $created_environment_file"
    ssh -i $pem -t -t $sshuser@$MasterIP "cat /etc/HPCCSystems/environment.xml" > $created_environment_file
-   echo "sed -i \"s/\\(\[^0-9\]\\)$terminated_ip\\(\[^0-9\]\\)/\\1$ThisInstanceIP\\2/g\" $created_environment_file"
-   sed -i "s/\([^0-9]\)$terminated_ip\([^0-9]\)/\1$ThisInstanceIP\2/g" $created_environment_file
+   echo "sed -i \"s/\\(\[^0-9\]\\)$terminated_ip\\(\[^0-9\]\\)/\\1$ThisInstancePrivateIP\\2/g\" $created_environment_file"
+   sed -i "s/\([^0-9]\)$terminated_ip\([^0-9]\)/\1$ThisInstancePrivateIP\2/g" $created_environment_file
    environment_has_been_created=1
 fi
 

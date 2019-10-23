@@ -225,7 +225,7 @@ my ($ebssize, $az, $region)=@_;
    local $_=`aws ec2 describe-volumes --region $region --volume-ids $volumeid 2>&1`;
    my $volume_available=(/"State"\s*:\s*"available"/s)? 1 : 0 ;
    my $c=0;
-   while ( ! $volume_available ){
+   while ( ! $volume_available && ( $c <= 20 ) ){
       $c++;
       print "In makeEBSVolume. $c. volume is not available, yet. WAITING.\n";
       sleep 5;

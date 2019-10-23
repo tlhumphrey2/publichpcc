@@ -123,7 +123,7 @@
 "i2.4xlarge",
 "i2.8xlarge"
 ],
-"Default" : "r3.large",
+"Default" : "r4.large",
 "Type" : "String"
 },
 "AdminCIDR" : {
@@ -159,6 +159,12 @@
 }
 },
 "Resources" : {        
+"MySQSQueue" : {
+"Type" : "AWS::SQS::Queue",
+"Properties" : {
+"QueueName" : { "Ref": "AWS::StackName" }
+}
+},
 "HPCCPlacementGroup" : {
 "Type" : "AWS::EC2::PlacementGroup",
 "Properties" : {
@@ -307,7 +313,7 @@
 {
 "ToPort": 8002, 
 "IpProtocol": "tcp", 
-"CidrIp": "10.0.0.0/16",
+"CidrIp": "0.0.0.0/0",
 "FromPort": 8002
 }, 
 {
@@ -325,7 +331,7 @@
 {
 "ToPort": 8010, 
 "IpProtocol": "tcp", 
-"CidrIp": { "Ref" : "AdminCIDR" },
+"CidrIp": "0.0.0.0/0",
 "FromPort": 8010
 }, 
 {
