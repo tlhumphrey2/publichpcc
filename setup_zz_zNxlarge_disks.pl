@@ -16,53 +16,53 @@ print "DEBUG: In setup_zz_zNxlarge_disks.pl. AFTER require getConfigurationFile.
 $sixteenTB=16384;
 
 # If there are command line arguments and the 1st is nummeric or volume id
-#  So, 1) if argument is nummeric then make an ebs volume the size given in 1st commandline argument, 2) attach volume to this
-#  instance. NOTE. if $DownedVolumeId!~/^\s*$/ then we have an instance that has gone down and we need to attach its volume
-#  to this instance, which is just coming up.
+#  So, 1) if argument is nummeric then make an ebs volume the size given in 1st commandline argument, 
+#  2) attach volume to this instance. NOTE. if $DownedVolumeId!~/^\s*$/ then we have an instance that 
+#  has gone down and we need to attach its volume to this instance, which is just coming up.
 if ( ($DownedInstanceId !~ /^\s*$/) || (( scalar(@argv) > 0 ) && (( $argv[0] =~ /^\d+$/ ) || ( $argv[0] =~ /^vol\-/ ))) ){
   local $ClusterComponent =($DownedInstanceId!~/^\s*$/)? $DownedNodeType : $argv[1];
-  $ebssize = ($DownedInstanceId!~/^\s*$/)? getEBSVolumeID($stackname, $ClusterComponent) : $argv[0];
+  $ebsInfo = ($DownedInstanceId!~/^\s*$/)? getEBSVolumeID($stackname, $ClusterComponent) : $argv[0];
   shift @argv;
   shift @argv;
   local $instanceID=`curl http://169.254.169.254/latest/meta-data/instance-id`;
   local $az = getAZ($region,$instanceID);
-  print "DEBUG: AS FOR EBS. ebssize=\"$ebssize\", region=\"$region\", az=\"$az\", nextdriveletter=\"$nextdriveletter\"\n";
+  print "DEBUG: AS FOR EBS. ebsInfo=\"$ebsInfo\", region=\"$region\", az=\"$az\", nextdriveletter=\"$nextdriveletter\"\n";
   local $v='';
   local @Volume2Attach=();
   @xvdlines=();
-  if ( $ebssize =~ /^\d+$/ ){
+  if ( $ebsInfo =~ /^\d+$/ ){
     # if volume size <= 16TB, which is maximum allowable size of single EBS volume.
-    if ( $ebssize <= $sixteenTB ){
-      my $v=makeEBSVolume($ebssize, $az, $region);
+    if ( $ebsInfo <= $sixteenTB ){
+      my $v=makeEBSVolume($ebsInfo, $az, $region);
       push @Volume2Attach, $v;
       push @xvdlines, "xvd$nextdriveletter";
     }
-    # Multiply ebs volumes must be made because $ebssize > 16TB.
+    # Multiply ebs volumes must be made because $ebsInfo > 16TB.
     else{
-      my $save_ebssize=$ebssize;
+      my $save_ebssize=$ebsInfo;
       my $v=makeEBSVolume($sixteenTB, $az, $region);
       push @Volume2Attach, $v;
       push @xvdlines, "xvd$nextdriveletter";
-      $ebssize = $ebssize-$sixteenTB;
-      while ( $ebssize > $sixteenTB ){
+      $ebsInfo = $ebsInfo-$sixteenTB;
+      while ( $ebsInfo > $sixteenTB ){
         $nextdriveletter++;
         my $v=makeEBSVolume($sixteenTB, $az, $region);
         push @Volume2Attach, $v;
         push @xvdlines, "xvd$nextdriveletter";
-        $ebssize = $ebssize-$sixteenTB;
+        $ebsInfo = $ebsInfo-$sixteenTB;
       }
-      if ( $ebssize > 0 ){
+      if ( $ebsInfo > 0 ){
         $nextdriveletter++;
-        my $v=makeEBSVolume($ebssize, $az, $region);
+        my $v=makeEBSVolume($ebsInfo, $az, $region);
         push @Volume2Attach, $v;
         push @xvdlines, "xvd$nextdriveletter";
       }
-      $ebssize = $save_ebssize;
+      $ebsInfo = $save_ebssize;
     }
   }
-  # If $ebssize is not an integer (i.e. ebs size) then it must be a volume id
+  # If $ebsInfo is not an integer (i.e. not ebs size) then it must be a volume id
   else{
-    $v = $ebssize;
+    $v = $ebsInfo;
     #print "aws ec2 create-tags --resources $v --tags Key=Name,Value=$stackname--$ClusterComponent --region $region\n";
     #my $changeTag=`aws ec2 create-tags --resources $v --tags Key=Name,Value=$stackname-$ClusterComponent --region $region`;
     #print "DEBUG: changeTag=\"$changeTag\"\n";
@@ -147,7 +147,7 @@ if ( scalar(@xvdlines) >= 1 ){
    system(" yum install xfsprogs.x86_64 -y");
 
    #----------------------------------------------------------------
-   if ((!defined($ebssize)) || ( $ebssize =~ /^\d+$/ )){
+   if ((!defined($ebsInfo)) || ( $ebsInfo =~ /^\d+$/ )){
      print(" mkfs.ext4 $mountdevice\n");
      system(" mkfs.ext4 $mountdevice");
    }

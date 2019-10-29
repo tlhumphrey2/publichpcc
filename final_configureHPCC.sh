@@ -16,11 +16,16 @@ if [ "$ThisClusterComponent" == 'Master' ] && [ "$EIPAllocationId" != "" ];then
   rc=`aws ec2 associate-address --instance-id $MasterInstanceId --allocation-id $EIPAllocationId --region $region`
   echo "rc=\"$rc\""
 fi
+#----------------------------------------------------------------------------------
+# END If there is an EIP, associate it with the master instance, i.e. 1st instance id in $instance_ids.
+#----------------------------------------------------------------------------------
 
+#----------------------------------------------------------------------------------
 # If this isn't the Master and there is an instance that has gone down then modify IPs
 #  of the Master instance envionment.xml file so that the IP for the downed instance is
-#  replaced with the IP of this instance. SO WE DON'T CREATE environment.xml with envgen.
-environment_has_been_created=''
+#  replaced with the IP of this instance. THIS MEANS WE DON'T CREATE environment.xml with envgen.
+#----------------------------------------------------------------------------------
+environment_has_been_created=''; # blank means false, i.e. environment has NOT been created
 if [ "$ThisClusterComponent" != 'Master' ] && [ "$terminated_ip" != "" ];then
    MasterIP=`head -1 $private_ips`
    echo "ssh -i $pem -t -t $sshuser@$MasterIP \"cat /etc/HPCCSystems/environment.xml\" outputto $created_environment_file"
@@ -38,7 +43,6 @@ if [ "$ThisClusterComponent" != 'Master' ] && [ "$terminated_ip" == "" ];then
      exit
   fi
 fi
-
 
 # if the above didn't create the environment file then create it with envgen.
 if [ "$environment_has_been_created" == "" ];then

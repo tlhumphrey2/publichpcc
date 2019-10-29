@@ -12,7 +12,8 @@ It gets all the IPs from the environment.xml file on the master and removes the 
 IPs for the slaves and roxies and possibly other support IPs. It then gets all the IPs of this instance in $private_ips and
 removes the master's IP (1st IP) from the list. Then a regex is made of both of these lists of IPs. $re_tt2 is the list of
 IPs from the master's environment.xml file and $re_pri_ips for the IPs found in $private_ips of this instance.
-Then the last grep statement at the end of this routine gets the IP of the terminated instance. 
+Then the last grep statement at the end of this routine gets the IP of the terminated instance. Basically, the last grep
+finds the private ip of the master's envirionment.xml that doesn't match any of the cluster's currenting running instances.
 =cut
   my $MasterIP=`head -1 $private_ips`;chomp $MasterIP;
   print "In getTerminatedIPAndNewIP. In getTerminatedIPAndNewIP. MasterIP=\"$MasterIP\"\n";
