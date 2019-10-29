@@ -6,6 +6,7 @@ echo "sshuser=\"$sshuser\""
 . $ThisDir/cfg_BestHPCC.sh
 
 echo "slavesPerNode=\"$slavesPerNode\""
+$roxienodes=`$ThisDir/outputInstanceInfo.pl |egrep "running"|egrep "^Roxie"|uniq -c|wc -l`;
 
 #----------------------------------------------------------------------------------
 # If there is an EIP, associate it with the master instance, i.e. 1st instance id in $instance_ids.
@@ -38,7 +39,7 @@ fi
 # If we don't have a Master then we don't want to create an environment.xml file
 if [ "$ThisClusterComponent" != 'Master' ] && [ "$terminated_ip" == "" ];then
   firstnodetype=`head -1 $nodetypes`;
-  if [ "$firstnodetype" ne "Master" ];then
+  if [ "$firstnodetype" != "Master" ];then
      echo "In $0. Because Master was not yet created, we are exiting without making environment.xml. ThisClusterComponent=\"$ThisClusterComponent\""
      exit
   fi
