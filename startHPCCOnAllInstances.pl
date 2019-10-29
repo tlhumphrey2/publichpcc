@@ -4,8 +4,11 @@ require "$ThisDir/getConfigurationFile.pl";
 require "$ThisDir/common.pl";
 print "In startHPCCOnAllInstances.pl. pem=\"$pem\"\n";
 
-# if this is the  Master then start cluster
-if ($ThisClusterComponent eq 'Master'){
+# Get 1st node type (which will be Master if master already exit)
+$firstnodetype=`head -1 $nodetypes`;chomp $firstnodetype;
+
+# if this instance is Master OR Master already exists and no instance is down (meaning this instance is newly added non-master instance)
+if (($ThisClusterComponent eq 'Master') || (($firstnodetype eq 'Master') && ($terminated_ip eq ''))){
   # Start the hpcc system
   print("In $0. /opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init start\n");
   $_=`/opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init start 2>&1`;
@@ -35,11 +38,6 @@ if ($ThisClusterComponent eq 'Master'){
 
   my $message = checkStatusOfCluster($stackname,$EIP);
   AlertUserOfChangeInRunStatus($region, $email, $stackname, $message);
-}
-# If this isn't a Master (i.e. thor or roxie) and no instances have been terminated (i.e. initial launch).
-elsif (($ThisClusterComponent ne 'Master') && ($terminated_ip eq '')){
-  print "In startHPCCOnAllInstances.pl. This is not Master (ThisClusterComponent=\"$ThisClusterComponent\") and not terminated instances. So, exiting.\n";
-  exit;
 }
 # If this isn't a Master (i.e. thor or roxie) and instances have been terminated (i.e. not initial launch).
 elsif (($ThisClusterComponent ne 'Master') && ($terminated_ip ne '')){
