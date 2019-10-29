@@ -6,7 +6,7 @@ echo "sshuser=\"$sshuser\""
 . $ThisDir/cfg_BestHPCC.sh
 
 echo "slavesPerNode=\"$slavesPerNode\""
-$roxienodes=`$ThisDir/outputInstanceInfo.pl |egrep "running"|egrep "^Roxie"|uniq -c|wc -l`;
+roxienodes=`$ThisDir/outputInstanceInfo.pl |egrep "running"|egrep "^Roxie"|uniq -c|wc -l`;
 
 #----------------------------------------------------------------------------------
 # If there is an EIP, associate it with the master instance, i.e. 1st instance id in $instance_ids.
