@@ -129,8 +129,7 @@ print "DEBUG: ThisInstancePrivateIP=$ThisInstancePrivateIP\n";
 print OUT "ThisInstancePrivateIP=$ThisInstancePrivateIP\n";
 
 foreach my $cfgvar (sort keys %ValueOfCfgVariable){
-   # 3 situations: username and password, platform, or other
-   if (( $cfgvar eq 'UserNameAndPassword' ) && ( $ValueOfCfgVariable{$cfgvar} ne 'username/password' ) && ( $ValueOfCfgVariable{$cfgvar} =~ /^\w+\W.+$/ )){
+   if (( $cfgvar eq 'UserNameAndPassword' ) && ( $ValueOfCfgVariable{$cfgvar} ne 'thumphrey/password' ) && ( $ValueOfCfgVariable{$cfgvar} =~ /^\w+\W.+$/ )){
       my $username = $1 if $ValueOfCfgVariable{$cfgvar} =~ /^(\w+)/;
       my $password = $1 if $ValueOfCfgVariable{$cfgvar} =~ /^$username.(.+)$/;
       print "DEBUG: system_username=$username\n";
@@ -178,7 +177,7 @@ print "DEBUG: First2Digits=\"$First2Digits\"\n";
    }
    else{
       next if $cfgvar eq 'channelsPerSlave';
-      print "DEBUG: cfgvar=\"$ValueOfCfgVariable{$cfgvar}\"\n";
+      print "DEBUG: $cfgvar=$ValueOfCfgVariable{$cfgvar}\n";
       print OUT "$cfgvar=$ValueOfCfgVariable{$cfgvar}\n";
    }
 }
@@ -193,12 +192,11 @@ if ( exists($ValueOfCfgVariable{'channelsPerSlave'}) && ($ValueOfCfgVariable{'ch
    }
 }
 
+
 #---------------------------------------------------------------------------------
 # Put arrays of Instance Variables (from Instance Descriptions) in cfg_BestHPCC.sh
 #---------------------------------------------------------------------------------
 print "# Arrays of Instance Variables:\n";
-# Note: @sorted_InstanceInfo is an array of hashes where $sorted_InstanceInfo[$i] is a
-# reference to a hash for one instance.
 for( my $i=0; $i < scalar(@sorted_InstanceInfo); $i++){
   my %InstanceVariable=%{$sorted_InstanceInfo[$i]};
 
@@ -208,7 +206,7 @@ for( my $i=0; $i < scalar(@sorted_InstanceInfo); $i++){
   if ( ($InstanceVariable{'State'} ne 'running') && ( $InstanceVariable{'Name'} eq $clustercomponent ) ){
     $DownedInstanceId=$InstanceVariable{'InstanceId'};
     $DownedNodeType=$InstanceVariable{'Name'};
-    $DownedVolumeId=$InstanceVariable{'VolumeId'}; # This will always be NULL (blank) since instance is down.
+    $DownedVolumeId=$InstanceVariable{'VolumeId'};
     # Must get IPs from cfg_BestHPCC.sh which was loaded in a the top of this script
     ( $DownedPublicIP, $DownedPrivateIP ) = getIPsGiveInstanceId($DownedInstanceId)
   }
@@ -221,9 +219,6 @@ for( my $i=0; $i < scalar(@sorted_InstanceInfo); $i++){
     }
   }
 }
-#---------------------------------------------------------------------------------
-# END Put arrays of Instance Variables (from Instance Descriptions) in cfg_BestHPCC.sh
-#---------------------------------------------------------------------------------
 
 # If there is a downed instance then save its info in /home/$user/cfg_BestHPCC.sh.
 if ( $DownedInstanceId!~/^\s*$/ ){
