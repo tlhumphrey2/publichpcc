@@ -21,48 +21,48 @@ $sixteenTB=16384;
 #  to this instance, which is just coming up.
 if ( ($DownedInstanceId !~ /^\s*$/) || (( scalar(@argv) > 0 ) && (( $argv[0] =~ /^\d+$/ ) || ( $argv[0] =~ /^vol\-/ ))) ){
   local $ClusterComponent =($DownedInstanceId!~/^\s*$/)? $DownedNodeType : $argv[1];
-  $ebssize = ($DownedInstanceId!~/^\s*$/)? getEBSVolumeID($stackname, $ClusterComponent) : $argv[0];
+  $ebsInfo = ($DownedInstanceId!~/^\s*$/)? getEBSVolumeID($stackname, $ClusterComponent) : $argv[0];
   shift @argv;
   shift @argv;
-  local $instanceID=`curl http://169.254.169.254/latest/meta-data/instance-id`;
-  local $az = getAZ($region,$instanceID);
-  print "DEBUG: AS FOR EBS. ebssize=\"$ebssize\", region=\"$region\", az=\"$az\", nextdriveletter=\"$nextdriveletter\"\n";
+  local $ThisInstanceId=`curl http://169.254.169.254/latest/meta-data/instance-id`;
+  local $az = getAZ($region,$ThisInstanceId);
+  print "DEBUG: AS FOR EBS. ebsInfo=\"$ebsInfo\", region=\"$region\", az=\"$az\", nextdriveletter=\"$nextdriveletter\"\n";
   local $v='';
   local @Volume2Attach=();
   @xvdlines=();
-  if ( $ebssize =~ /^\d+$/ ){
+  if ( $ebsInfo =~ /^\d+$/ ){
     # if volume size <= 16TB, which is maximum allowable size of single EBS volume.
-    if ( $ebssize <= $sixteenTB ){
-      my $v=makeEBSVolume($ebssize, $az, $region);
+    if ( $ebsInfo <= $sixteenTB ){
+      my $v=makeEBSVolume($ebsInfo, $az, $region);
       push @Volume2Attach, $v;
       push @xvdlines, "xvd$nextdriveletter";
     }
-    # Multiply ebs volumes must be made because $ebssize > 16TB.
+    # Multiply ebs volumes must be made because $ebsInfo > 16TB.
     else{
-      my $save_ebssize=$ebssize;
+      my $save_ebssize=$ebsInfo;
       my $v=makeEBSVolume($sixteenTB, $az, $region);
       push @Volume2Attach, $v;
       push @xvdlines, "xvd$nextdriveletter";
-      $ebssize = $ebssize-$sixteenTB;
-      while ( $ebssize > $sixteenTB ){
+      $ebsInfo = $ebsInfo-$sixteenTB;
+      while ( $ebsInfo > $sixteenTB ){
         $nextdriveletter++;
         my $v=makeEBSVolume($sixteenTB, $az, $region);
         push @Volume2Attach, $v;
         push @xvdlines, "xvd$nextdriveletter";
-        $ebssize = $ebssize-$sixteenTB;
+        $ebsInfo = $ebsInfo-$sixteenTB;
       }
-      if ( $ebssize > 0 ){
+      if ( $ebsInfo > 0 ){
         $nextdriveletter++;
-        my $v=makeEBSVolume($ebssize, $az, $region);
+        my $v=makeEBSVolume($ebsInfo, $az, $region);
         push @Volume2Attach, $v;
         push @xvdlines, "xvd$nextdriveletter";
       }
-      $ebssize = $save_ebssize;
+      $ebsInfo = $save_ebssize;
     }
   }
-  # If $ebssize is not an integer (i.e. ebs size) then it must be a volume id
+  # If $ebsInfo is not an integer then it must be a volume id
   else{
-    $v = $ebssize;
+    $v = $ebsInfo;
     #print "aws ec2 create-tags --resources $v --tags Key=Name,Value=$stackname--$ClusterComponent --region $region\n";
     #my $changeTag=`aws ec2 create-tags --resources $v --tags Key=Name,Value=$stackname-$ClusterComponent --region $region`;
     #print "DEBUG: changeTag=\"$changeTag\"\n";
@@ -80,8 +80,8 @@ if ( ($DownedInstanceId !~ /^\s*$/) || (( scalar(@argv) > 0 ) && (( $argv[0] =~ 
     my $c=0;
     ATTACHVOLUME:
     $c++;
-     print("$c. aws ec2 attach-volume --volume-id $v --instance-id $instanceID --device $dev --region $region &> /home/ec2-user/attach-volume.log\n");
-     system("aws ec2 attach-volume --volume-id $v --instance-id $instanceID --device $dev --region $region &> /home/ec2-user/attach-volume.log");
+     print("$c. aws ec2 attach-volume --volume-id $v --instance-id $ThisInstanceId --device $dev --region $region &> /home/ec2-user/attach-volume.log\n");
+     system("aws ec2 attach-volume --volume-id $v --instance-id $ThisInstanceId --device $dev --region $region &> /home/ec2-user/attach-volume.log");
 
      $_=`aws ec2 describe-volumes --volume-ids $v --region $region|$ThisDir/json2yaml.sh`;
      if ( ! /\{AttachTime: '\d{4}-\d{2}-\d{2}T/s ){
@@ -99,8 +99,8 @@ if ( ($DownedInstanceId !~ /^\s*$/) || (( scalar(@argv) > 0 ) && (( $argv[0] =~ 
 
     # modify DeleteOnTermination to be true
     print "Change DeleteOnTermination to false\n";
-    print("bash /home/ec2-user/DeleteOnTermination2False.sh $instanceID $dev $region\n");
-    system("bash /home/ec2-user/DeleteOnTermination2False.sh $instanceID $dev $region");
+    print("bash /home/ec2-user/DeleteOnTermination2False.sh $ThisInstanceId $dev $region\n");
+    system("bash /home/ec2-user/DeleteOnTermination2False.sh $ThisInstanceId $dev $region");
   }
   print "DEBUG: Leaving EBS processing code.\n";
 }
@@ -147,7 +147,7 @@ if ( scalar(@xvdlines) >= 1 ){
    system(" yum install xfsprogs.x86_64 -y");
 
    #----------------------------------------------------------------
-   if ((!defined($ebssize)) || ( $ebssize =~ /^\d+$/ )){
+   if ((!defined($ebsInfo)) || ( $ebsInfo =~ /^\d+$/ )){
      print(" mkfs.ext4 $mountdevice\n");
      system(" mkfs.ext4 $mountdevice");
    }
@@ -207,7 +207,7 @@ return @xvdlines;
 }
 #----------------------------------------------------------------
 sub getAZ{
-my ($region,$instanceID)=@_;
+my ($region,$ThisInstanceId)=@_;
   # Get instance id from metadata
   my $az=`curl http://169.254.169.254/latest/meta-data/placement/availability-zone`;chomp $az;
   return $az;
@@ -245,10 +245,13 @@ my ($stackname, $ClusterComponent)=@_;
 my $tagvalue="$stackname--$ClusterComponent";
 local $_=`aws ec2 describe-volumes --filters Name=tag:Name,Values=$tagvalue --region $region|$ThisDir/json2yaml.sh`;
 print "DEBUG: In getEBSVolumeID. \$_=\"$_\"\n";
+
+# Get volume descriptions in array @volid
 my @volid=m/\n(- Attachments:.+?\n  VolumeType:[^\n]+)/gs;
 foreach my $dv (@volid){ print "VolumeDescription=\"$dv\"\n"; }
 die "FATAL ERROR: In getEBSVolumeID. Can't handle this situation, i.e. where more than one $ClusterComponent instance goes down.\n" if scalar(grep(/State: available/,@volid)) > 1;
 die "FATAL ERROR: In getEBSVolumeID. There should be a volume available but there is not for $ClusterComponent instance that went down.\n" if scalar(grep(/State: available/,@volid)) == 0;
+# Get volume description that was attached to downed instance
 my $x; ($x)=grep(/State: available/,@volid);
 print "DEBUG: In getEBSVolumeID. x=\"$x\"\n";
 my $v=($x=~/VolumeId: (vol-\w+)/)? $1 : '';

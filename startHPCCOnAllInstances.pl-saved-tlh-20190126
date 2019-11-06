@@ -45,7 +45,7 @@ for( my $i=$#private_ips; $i >= 0; $i--){
   }
 }
 
-if (( $supportnodes <= 1 ) && ( $non_support_instances <= 1 )){
+if (( $supportnodes <= 1 ) && ( $slave_instances <= 1 )){
   print "Since there is only one instance, sleep 10 seconds before starting cluster.\n";
   sleep 10;
 }

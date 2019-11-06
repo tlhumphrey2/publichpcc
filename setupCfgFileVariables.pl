@@ -83,29 +83,19 @@ foreach (sort keys %OutputOnceVariables){
 #-------------------------------------------------------------------------------------
 
 # Put information about each HPCC instance in files (file names in configuration, $ThisDir/cfg_BestHPCC.sh)
-putHPCCInstanceInfoInFiles(\@sorted_InstanceInfo);
+($roxienodes,$slave_instances,$supportnodes) = putHPCCInstanceInfoInFiles(\@sorted_InstanceInfo);
+$ValueOfCfgVariable{'roxienodes'}=$roxienodes;
+$ValueOfCfgVariable{'slave_instances'}=$slave_instances;
+$ValueOfCfgVariable{'supportnodes'}=$supportnodes;
+print "DEBUG: In $0. roxienodes=\"$roxienodes\", slave_instances=\"$slave_instances\", supportnodes=\"$supportnodes\".\n";
 
 @nodetypes=split(/\n/,`cat $nodetypes`); @nodetypes=grep(!/^\s*$/,@nodetypes);
 print "WARNING. In $0. Master's instance id, private_ip, public_ip, and nodetypes was NOT the 1st and MUST BE.\n" if $nodetypes[0] ne 'Master';
 
-#------------------------------------------------------------------------------------
-# Adjust 'non_support_instances' and put all config values in cfg_BestHPCC.sh 
-#------------------------------------------------------------------------------------
 # Get number of instances
 @InstanceIds=split(/\n/,`cat $instance_ids`); @InstanceIds=grep(!/^\s*$/,@InstanceIds);
 $nInstances=scalar(@InstanceIds);
 print "DEBUG: nInstances=\"$nInstances\"\n";
-
-$ValueOfCfgVariable{'supportnodes'}=$DefaultValuesOfCfgVariables{'supportnodes'};
-if (($nInstances>0) && ($nInstances<=2)){
-   $ValueOfCfgVariable{'non_support_instances'}=1;
-   print "DEBUG: nInstances is gt 0 and le 2. nInstances=\"$nInstances\", ValueOfCfgVariable{'supportnodes'}=\"$ValueOfCfgVariable{'supportnodes'}\", ValueOfCfgVariable{'non_support_instances'}=\"$ValueOfCfgVariable{'non_support_instances'}\"\n";
-}
-else{
-   $ValueOfCfgVariable{'non_support_instances'} = $nInstances - $ValueOfCfgVariable{'supportnodes'} - $ValueOfCfgVariable{'roxienodes'};
-   print "DEBUG: nInstances is gt 2. nInstances=\"$nInstances\", ValueOfCfgVariable{'supportnodes'}=\"$ValueOfCfgVariable{'supportnodes'}\", ValueOfCfgVariable{'non_support_instances'}=\"$ValueOfCfgVariable{'non_support_instances'}\"\n";
-}
-
 #-------------------------------------------------
 # Put all configuration values in cfg_BestHPCC.sh
 #-------------------------------------------------

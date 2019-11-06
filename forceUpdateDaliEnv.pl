@@ -5,9 +5,9 @@ require "$ThisDir/common.pl";
 
 print "Entering $0. On $ThisClusterComponent, whose IP is \"$ThisInstancePrivateIP\"\n";
 
-$terminated_ip=shift @ARGV;
 $new_ip=shift @ARGV;
 $nodetype=shift @ARGV;
+$terminated_ip=shift @ARGV;
 print "In $0. terminated_ip=\"$terminated_ip\", new_ip=\"$new_ip\" nodetype=\"$nodetype\"\n";
 if ( "$nodetype" eq 'Slave' ){
  print "In $0: sed -i \"s/^$terminated_ip\\b/$new_ip/\" /var/lib/HPCCSystems/mythor/uslaves\n";
@@ -28,4 +28,3 @@ print "In $0 after calling getMasterEIP. EIP=\"$EIP\".\n";
 
 $message=checkStatusOfCluster($stackname,$EIP);
 AlertUserOfChangeInRunStatus($region, $email, $stackname, $message);
-

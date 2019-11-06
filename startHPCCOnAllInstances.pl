@@ -2,13 +2,13 @@
 $ThisDir=($0=~/^(.*)\//)? $1 : ".";
 require "$ThisDir/getConfigurationFile.pl";
 require "$ThisDir/common.pl";
-print "In startHPCCOnAllInstances.pl. pem=\"$pem\"\n";
+print "Entering startHPCCOnAllInstances.pl. pem=\"$pem\"\n";
 
-# Get 1st node type (which will be Master if master already exit)
-$firstnodetype=`head -1 $nodetypes`;chomp $firstnodetype;
+# Master doesn't exist of $master_exists is blank.
+$master_exists=`aws s3 ls s3://$stackname/master-created`;
 
-# if this instance is Master OR Master already exists and no instance is down (meaning this instance is newly added non-master instance)
-if (($ThisClusterComponent eq 'Master') || (($firstnodetype eq 'Master') && ($terminated_ip eq ''))){
+# If this instance is Master OR Master already exists and no instance is down (meaning this instance is newly added non-master instance)
+if (($ThisClusterComponent eq 'Master')){
   # Start the hpcc system
   print("In $0. /opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init start\n");
   $_=`/opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init start 2>&1`;
@@ -22,29 +22,46 @@ if (($ThisClusterComponent eq 'Master') || (($firstnodetype eq 'Master') && ($te
   $_=`/opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init restart 2>&1`;
   print "In $0. rc=\"$_\"\n";
 
-=pod
-  # If thor didn't start then do a restart of cluster
-  if ( /Starting mythor .*TIMEOUT/ ){
-    print "THOR didn't start. So, doing a restart.\n";
-    sleep 10;
-    print("/opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init restart\n");
-    $_=`/opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init restart 2>&1`;
-    print "$_\n";
-  }
-=cut
-
   $EIP=getMasterEIP($region, $EIPAllocationId);
   print "In $0 after calling getMasterEIP. EIP=\"$EIP\".\n";
 
   my $message = checkStatusOfCluster($stackname,$EIP);
   AlertUserOfChangeInRunStatus($region, $email, $stackname, $message);
 }
-# If this isn't a Master (i.e. thor or roxie) and instances have been terminated (i.e. not initial launch).
+# If this isn't a Master (i.e. thor or roxie) and instances have been terminated
+#   (i.e. not initial launch).
 elsif (($ThisClusterComponent ne 'Master') && ($terminated_ip ne '')){
    my $MasterIP=`head -1 $private_ips`;chomp $MasterIP;
 
    # Note. terminated_ip and ThisInstancePrivateIP are in cfg_BestHPCC.sh which is gotten with getConfigurationFile.pl above.
-   print("ssh -o StrictHostKeyChecking=no -i $pem -t -t $sshuser\@$MasterIP \"sudo $ThisDir/forceUpdateDaliEnv.pl $terminated_ip $ThisInstancePrivateIP $ThisClusterComponent\"");
-   my $rc=`ssh -o StrictHostKeyChecking=no -i $pem -t -t $sshuser\@$MasterIP "sudo $ThisDir/forceUpdateDaliEnv.pl $terminated_ip $ThisInstancePrivateIP $ThisClusterComponent"`;
+   print("ssh -o StrictHostKeyChecking=no -i $pem -t -t $sshuser\@$MasterIP \"sudo $ThisDir/forceUpdateDaliEnv.pl $ThisInstancePrivateIP $ThisClusterComponent $terminated_ip\"");
+   my $rc=`ssh -o StrictHostKeyChecking=no -i $pem -t -t $sshuser\@$MasterIP "sudo $ThisDir/forceUpdateDaliEnv.pl $ThisInstancePrivateIP $ThisClusterComponent $terminated_ip"`;
    print "rc=\"$rc\"\n";
+}
+# if this instance is slave or roxie and master already exists then adjust process lines of env 
+#  and push to all instances and restart cluster.
+elsif (($ThisClusterComponent ne 'Master') && ($master_exists ne '')){
+  print "In $0. Slave or Roxie & Master exists. orderComponentProcessLinesByLaunchTime($stackname, $ThisClusterComponent)\n";
+  my $new_env_file = orderComponentProcessLinesByLaunchTime($stackname, $ThisClusterComponent);
+  print "In $0. cp -v $new_env_file $out_environment_file\n";
+  $_=`cp -v $new_env_file $out_environment_file`;
+  print "In $0. cp new_environment.xml return code is \"$_\"\n";
+  print "In $0. cp -v $new_env_file $created_environment_file\n";
+  $_=`cp -v $new_env_file $created_environment_file`;
+
+  # push to all cluster instances
+  print "In $0. /opt/HPCCSystems/sbin/hpcc-push.sh -s $created_environment_file -t $out_environment_file\n"; 
+  $_ = `/opt/HPCCSystems/sbin/hpcc-push.sh -s $created_environment_file -t $out_environment_file`; 
+  print "In $0. push return code is \"$_\"\n";
+
+  # restart cluster
+  print("In $0. /opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init restart\n");
+  $_=`/opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init restart 2>&1`;
+  print "In $0. rc=\"$_\"\n";
+
+  my $message = checkStatusOfCluster($stackname,$EIP);
+  AlertUserOfChangeInRunStatus($region, $email, $stackname, $message);
+}
+else{
+  print "In $0. DID NOT START CLUSTER.\n";
 }

@@ -1,45 +1,43 @@
 #!/bin/bash -e
 ThisDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 sshuser=`basename $ThisDir`
-echo "sshuser=\"$sshuser\""
+echo "ENTERING $0. sshuser=\"$sshuser\""
 
 . $ThisDir/cfg_BestHPCC.sh
 
 echo "slavesPerNode=\"$slavesPerNode\""
-roxienodes=`$ThisDir/outputInstanceInfo.pl |egrep "running"|egrep "^Roxie"|uniq -c|wc -l`;
 
-#----------------------------------------------------------------------------------
-# If there is an EIP, associate it with the master instance, i.e. 1st instance id in $instance_ids.
-#----------------------------------------------------------------------------------
-if [ "$ThisClusterComponent" == 'Master' ] && [ "$EIPAllocationId" != "" ];then
-  MasterInstanceId=`head -1 $instance_ids`
-  echo "aws ec2 associate-address --instance-id $MasterInstanceId --allocation-id $EIPAllocationId --region $region"
-  rc=`aws ec2 associate-address --instance-id $MasterInstanceId --allocation-id $EIPAllocationId --region $region`
-  echo "rc=\"$rc\""
+# If we don't have a Master then we don't want to create an environment.xml file
+if [ "$ThisClusterComponent" != 'Master' ] && [ "$terminated_ip" == "" ];then
+  echo "aws s3 cp s3://$stackname/master-created .;master_exists=\$?";
+  aws s3 cp s3://$stackname/master-created .;master_exists=$?;
+  echo "master_exists=\"$master_exists\""
+
+  if [ "$master_exists" != "0" ];then
+    echo "In $0. Because Master was not yet created, we are exiting without making environment.xml. ThisClusterComponent=\"$ThisClusterComponent\""
+    exit
+  else
+    echo "Master already exists. So stop the cluster so after envgen creates new environment.xml we can start cluster."
+    MasterIP=`head -1 $private_ips`
+    echo "ssh -o StrictHostKeyChecking=no -i $pem -t -t $sshuser@$MasterIP \"sudo /opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init stop\""
+    ssh -o StrictHostKeyChecking=no -i $pem -t -t $sshuser@$MasterIP "sudo /opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init stop"
+  fi
+else
+  echo "ThisClusterComponent=\"$ThisClusterComponent\" and terminated_ip=\"$terminated_ip\""
 fi
 
 # If this isn't the Master and there is an instance that has gone down then modify IPs
 #  of the Master instance envionment.xml file so that the IP for the downed instance is
 #  replaced with the IP of this instance. SO WE DON'T CREATE environment.xml with envgen.
-environment_has_been_created=''
+environment_has_been_created=""
 if [ "$ThisClusterComponent" != 'Master' ] && [ "$terminated_ip" != "" ];then
    MasterIP=`head -1 $private_ips`
-   echo "ssh -i $pem -t -t $sshuser@$MasterIP \"cat /etc/HPCCSystems/environment.xml\" outputto $created_environment_file"
-   ssh -i $pem -t -t $sshuser@$MasterIP "cat /etc/HPCCSystems/environment.xml" > $created_environment_file
+   echo "ssh -o StrictHostKeyChecking=no -i $pem -t -t $sshuser@$MasterIP \"cat /etc/HPCCSystems/environment.xml\" outputto $created_environment_file"
+   ssh -o StrictHostKeyChecking=no -i $pem -t -t $sshuser@$MasterIP "cat /etc/HPCCSystems/environment.xml" > $created_environment_file
    echo "sed -i \"s/\\(\[^0-9\]\\)$terminated_ip\\(\[^0-9\]\\)/\\1$ThisInstancePrivateIP\\2/g\" $created_environment_file"
    sed -i "s/\([^0-9]\)$terminated_ip\([^0-9]\)/\1$ThisInstancePrivateIP\2/g" $created_environment_file
-   environment_has_been_created=1
+   environment_has_been_created="1"
 fi
-
-# If we don't have a Master then we don't want to create an environment.xml file
-if [ "$ThisClusterComponent" != 'Master' ] && [ "$terminated_ip" == "" ];then
-  firstnodetype=`head -1 $nodetypes`;
-  if [ "$firstnodetype" != "Master" ];then
-     echo "In $0. Because Master was not yet created, we are exiting without making environment.xml. ThisClusterComponent=\"$ThisClusterComponent\""
-     exit
-  fi
-fi
-
 
 # if the above didn't create the environment file then create it with envgen.
 if [ "$environment_has_been_created" == "" ];then
@@ -89,7 +87,7 @@ if [ "$environment_has_been_created" == "" ];then
     MinLargeSlaveMemory=10737418240
     
     memory_override=''
-    if [ $non_support_instances -gt 0 ] && [ $masterMemTotal -ne $slaveMemTotal ] && [ $slaveMemTotal -gt $MinLargeSlaveMemory ] && [ $masterMemTotal -ge $TwoGB ]
+    if [ $slave_instances -gt 0 ] && [ $masterMemTotal -ne $slaveMemTotal ] && [ $slaveMemTotal -gt $MinLargeSlaveMemory ] && [ $masterMemTotal -ge $TwoGB ]
     then
        # masterMemorySize = ($masterMemTotal - $OneGB)/$OneMB
        masterMemorySize=$(echo $masterMemTotal $OneGB $OneMB| awk '{printf "%.0f\n",($1-$2)/$3}')
@@ -110,8 +108,8 @@ if [ "$environment_has_been_created" == "" ];then
     envgen=/opt/HPCCSystems/sbin/envgen;
     
     # Make new environment.xml file for newly configured HPCC System.
-    echo "$envgen -env $created_environment_file $all_overrides -ipfile $private_ips -supportnodes $supportnodes -thornodes $non_support_instances -roxienodes $roxienodes -slavesPerNode $slavesPerNode -roxieondemand 1"
-    $envgen  -env $created_environment_file $all_overrides -ipfile $private_ips -supportnodes $supportnodes -thornodes $non_support_instances -roxienodes $roxienodes  -slavesPerNode $slavesPerNode -roxieondemand 1
+    echo "$envgen -env $created_environment_file $all_overrides -ipfile $private_ips -supportnodes $supportnodes -thornodes $slave_instances -roxienodes $roxienodes -slavesPerNode $slavesPerNode -roxieondemand 1"
+    $envgen  -env $created_environment_file $all_overrides -ipfile $private_ips -supportnodes $supportnodes -thornodes $slave_instances -roxienodes $roxienodes  -slavesPerNode $slavesPerNode -roxieondemand 1
 fi    
 #---------------------------------------------------------------------------------
 # Add comment saying that environment.xml was generated by HaaS final_configureHPCC.sh

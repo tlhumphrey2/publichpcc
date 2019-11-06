@@ -23,7 +23,7 @@ die "FATAL ERROR: $0. The environment variable, ToS3Bucket, does not have a valu
 
 my $bucket_basename=$ToS3Bucket;
 $bucket_basename = "s3://$bucket_basename" if $bucket_basename !~ /^s3:\/\//;
-print("In cp2S3FromMasterAndAllSlaves.pl. bucket_basename=\"$bucket_basename\", non_support_instances=$non_support_instances\n");
+print("In cp2S3FromMasterAndAllSlaves.pl. bucket_basename=\"$bucket_basename\", slave_instances=$slave_instances\n");
 
 #-----------------------------------------------------------------------------------------------------------------------------
 # Setup S3 buckets (one named after stackname which contains cfg_BestHPCC.sh; then one for each THOR instance)
@@ -31,7 +31,7 @@ print("In cp2S3FromMasterAndAllSlaves.pl. bucket_basename=\"$bucket_basename\", 
 $user="ec2-user";
 # Setup S3 buckets for all THOR instances.
 my @bucketname=();
-for( my $i=0; $i <= $non_support_instances; $i++){ # we don't do this to any roxie instances
+for( my $i=0; $i <= $slave_instances; $i++){ # we don't do this to any roxie instances
   my $ip=$private_ips[$i];
   my $bucketname = ( $i==0 )? "${bucket_basename}-master" : sprintf "${bucket_basename}-snode-%02d",$i;
   push @bucketname, $bucketname;
@@ -47,7 +47,7 @@ $ThisSlaveNodesPip = get_this_nodes_private_ip();
 
 # copy files from HPCC master and slaves to S3 bucket (these are done in parallel)
 my $ThisInstanceFound=0;
-for( my $i=0; $i <= $non_support_instances; $i++){ # we don't do this to any roxie instances
+for( my $i=0; $i <= $slave_instances; $i++){ # we don't do this to any roxie instances
   my $ip=$private_ips[$i];
   if ( $ip eq $ThisSlaveNodesPip ){
      $ThisInstanceFound=1;

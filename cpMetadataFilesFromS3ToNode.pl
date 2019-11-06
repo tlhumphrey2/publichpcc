@@ -79,9 +79,9 @@ sub makeIPGroup{
   # Fill array with IPs starting with last one first.
   # Slave IPs are stored in @SlaveIPs. The order: last slave ip is first in @SlaveIPs.
   my @IPsByNodeNumber=();
-  my $nSlaves=$non_support_instances*$slavesPerNode;
+  my $nSlaves=$slave_instances*$slavesPerNode;
   for( $i=1; $i <= $nSlaves; $i++){
-     my $j= $i % $non_support_instances;
+     my $j= $i % $slave_instances;
      $IPsByNodeNumber[$i] = $SlaveIPs[$j]; 
   }
   $[=0;

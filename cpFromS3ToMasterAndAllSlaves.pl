@@ -29,7 +29,7 @@ else{
 #-----------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------
 # Make sure the copy FROM HPCC is compatible with the copy TO HPCC.
-# This includes: they must have the same number of thor slave instances ($non_support_instances),
+# This includes: they must have the same number of thor slave instances ($slave_instances),
 #  they must have the same number of thor slaves per instance ($slavesPerNode), and
 #  for the TO THOR, each instance must have enough disk space to hold the files being copied.
 #-------------------------------------------------------------------------------
@@ -37,20 +37,20 @@ else{
 require "$thisDir/getNewConfigurationFile.pl";
 
 $from_slavesPerNode=$slavesPerNode;                # Number of slave nodes per slave instance
-$from_non_support_instances=$non_support_instances;# Number of slave instances
+$from_slave_instances=$slave_instances;# Number of slave instances
 $from_thor_s3_buckets=$thor_s3_buckets;            # List of s3_buckets containing 
 @from_thor_s3_buckets=split(/,/,$from_thor_s3_buckets);
-print "from_slavesPerNode=$from_slavesPerNode, from_non_support_instances=$from_non_support_instances, \@from_thor_s3_buckets=(",join(", ",@from_thor_s3_buckets),")\n";
+print "from_slavesPerNode=$from_slavesPerNode, from_slave_instances=$from_slave_instances, \@from_thor_s3_buckets=(",join(", ",@from_thor_s3_buckets),")\n";
 
 # Instantiate the cfg files environment variables of TO HPCC
 require "$thisDir/getConfigurationFile.pl";
 require "$thisDir/cp2s3_common.pl";
 
 #-----------------------------------------------------------------------------------------
-# slavesPerNode and non_support_instances of FROM and TO systems must be the same.
+# slavesPerNode and slave_instances of FROM and TO systems must be the same.
 #-----------------------------------------------------------------------------------------
-die "CANNOT copy files in the s3 bucket, $bucket_basename, because configuration of the FROM HPCC cluster DOES NOT match that of the TO HPCC cluser (from_slavesPerNode=$from_slavesPerNode, slavesPerNode=$slavesPerNode, from_non_support_instances=$from_non_support_instances, non_support_instances=$non_support_instances).\n" 
-  if ($from_slavesPerNode != $slavesPerNode) || ($from_non_support_instances != $non_support_instances);
+die "CANNOT copy files in the s3 bucket, $bucket_basename, because configuration of the FROM HPCC cluster DOES NOT match that of the TO HPCC cluser (from_slavesPerNode=$from_slavesPerNode, slavesPerNode=$slavesPerNode, from_slave_instances=$from_slave_instances, slave_instances=$slave_instances).\n" 
+  if ($from_slavesPerNode != $slavesPerNode) || ($from_slave_instances != $slave_instances);
 
 #----------------------------------------------------------------------------------------------
 # Make sure there is enough disk space on TO THOR to hold the files of the FROM cluster
@@ -124,7 +124,7 @@ print "ThisSlaveNodesPip=\"$ThisSlaveNodesPip\"\n";
 
 # copy files from S3 bucket to HPCC master and slaves (done in parallel)
 my $ThisInstanceFound=0;
-for( my $i=0; $i <= $non_support_instances; $i++){ # we don't do this to any roxie instances
+for( my $i=0; $i <= $slave_instances; $i++){ # we don't do this to any roxie instances
   my $ip=$private_ips[$i];
   if ( $ip eq $ThisSlaveNodesPip ){
      $ThisInstanceFound=1;

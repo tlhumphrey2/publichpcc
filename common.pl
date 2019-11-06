@@ -1,5 +1,116 @@
 #!/usr/bin/perl
 #==========================================================================================================
+sub getComponentIPsByLaunchTime{
+my ($stackname, $nodetype)=@_;
+print "DEBUG: Entering getComponentIPsByLaunchTime. stackname=\"$stackname\", nodetype=\"$nodetype\"\n";
+$_ = `egrep "^    PrivateIpAddress:|^    LaunchTime:|^    - {Key: Name, Value: $stackname--" $ThisDir/$stackname-instance-descriptions.yaml`;
+@in = split(/\n/,$_);
+$line = '';
+$i=1;
+foreach (@in){
+  s/^ +//;
+  s/\{.+--(.+)\}/$1/g;
+  if ( ($i % 3) == 0 ){
+    $line .= ' '.$_;
+    push @line, $line;
+    $line = '';
+
+  }
+  else{
+    $line .= ' '.$_;
+  }
+
+  $i++;
+}
+
+@line = sort(@line);
+@line = grep(/$nodetype/,@line);
+@line = grep(s/^.+PrivateIpAddress: (\d+\.\d+.\d+.\d+) - $nodetype\s*$/$1/,@line);
+print "DEBUG: Leaving getComponentIPsByLaunchTime. Returned IPs are: \@line=(",join(", ",@line),")\n";
+return @line;
+}
+#==========================================================================================================
+sub makeComponentProcessLines{
+my ( $nodetype, @IPs )=@_;
+print "DEBUG: Entering makeComponentProcessLines. nodetype=\"$nodetype\", \@IPs=(",join(", ",@IPs),")\n";
+
+ my $thor_process_template = '   <ThorSlaveProcess computer="<node_id>" name="s<num>"/>'; 
+ my $roxie_process_template = '   <RoxieServerProcess computer="<node_id>" name="<node_id>" netAddress="<ip>"/>'; 
+ my @process_line = ();
+ my $num=1;
+ foreach (@IPs){
+   my $ip = $_;
+   s/^\d+\.\d+.\d+.(\d+)$/$1/;
+   my $pline = ($nodetype eq 'Slave')? $thor_process_template : $roxie_process_template ;
+   my $node_id = sprintf "node%06d",$_;
+   $pline =~ s/<node_id>/$node_id/g;
+   $pline =~ s/<num>/$num/g;
+   $pline =~ s/<ip>/$ip/g;
+   push @process_line, $pline;
+   $num++;
+ }
+print "DEBUG: Leaving makeComponentProcessLines. \@process_line=(",join(", ",@process_line),")\n";
+return @process_line;
+}
+#==========================================================================================================
+sub replaceComponentProcessLines{
+my ( $nodetype, @process_line )=@_;
+print "DEBUG: Entering replaceComponentProcessLines. nodetype=\"$nodetype\", \@process_line=(",join(", ",@process_line),")\n";
+  @process_line = grep(! /^\s*$/,@process_line);
+  local $_ = `cat /etc/HPCCSystems/environment.xml`;
+  my @line = split(/\n/,$_);
+  my $slave_process = '<ThorSlaveProcess';
+  my $roxie_process = '<RoxieServerProcess';
+  my $pid  = ($nodetype eq 'Slave')? $slave_process : $roxie_process ;
+  my @new = ();
+  my $found_processes = 0;
+  for ( my $i=0; $i < scalar(@line); ){
+    $_ = $line[$i];
+    if ( /$pid/ ){
+      $found_processes = 1;
+      do{
+        print "DEBUG: In replaceComponentProcessLines. Found process line: \"$_\"\n";
+        $i++;
+        $_ = $line[$i];
+      } while( /$pid/ );
+      push @new, @process_line;
+    }
+
+    if ( $found_processes ){
+      push @new, @line[ $i .. $#line ];
+      last;
+    }
+    else{
+      push @new, $_;
+    }
+    $i++;
+  }
+
+  if ( $found_processes == 0 ){
+    print "DEBUG: In replaceComponentProcessLines. ERROR. DID NOT find any lined beginning with \"$pid\"\n";
+  }
+return join("\n",@new);
+}
+#==========================================================================================================
+# This routine replaces component (either Slave or Roxie) process lines with lines ordered by launch time
+sub orderComponentProcessLinesByLaunchTime{
+my ($stackname, $nodetype)=@_;
+
+  my @IPs = getComponentIPsByLaunchTime($stackname, $nodetype);
+  print "In fixComponentProcessLines. ",join("\nIn fixComponentProcessLines. ",@IPs),"\n";
+
+  my @process_line = makeComponentProcessLines( $nodetype, @IPs );
+  print "\n============================ Process Lines ============================\n";
+  print "In fixComponentProcessLines. ",join("\nIn fixComponentProcessLines. ",@process_line),"\n";
+
+  my $new_environment = replaceComponentProcessLines( $nodetype, @process_line );
+  open(OUT,">$ThisDir/new_environment.xml") || die "Can't open for output: \"$ThisDir/new_environment.xml\"\n";
+  print OUT $new_environment;
+  close(OUT);
+  print "In fixComponentProcessLines. new_environment.xml file=\"$ThisDir/new_environment.xml\"\n";
+return "$ThisDir/new_environment.xml";
+}
+#==========================================================================================================
 sub getSshUser{
   my $sshuser=`basename $ThisDir`;chomp $sshuser;
   return $sshuser;
@@ -101,6 +212,9 @@ my ($ref_sorted_InstanceInfo)=@_;
    # Get Instance Ids, private_ips, public_ips, and nodetypes of ONLY HPCC instances
    #------------------------------------------------------------------------------------
    my (@InstanceIds, @private_ips, @public_ips, @nodetypes);
+   my $roxienodes=0;
+   my $supportnodes=0;
+   my $slave_instances=0;
    for( my $i=0; $i < scalar(@sorted_InstanceInfo); $i++){
      my %InstanceVariable=%{$sorted_InstanceInfo[$i]};
      print "In putHPCCInstanceInfoInFiles. InstanceVariable{'nodetype'}=\"$InstanceVariable{'nodetype'}\"\n";
@@ -109,6 +223,16 @@ my ($ref_sorted_InstanceInfo)=@_;
        push @private_ips, $InstanceVariable{'PrivateIpAddress'};
        push @public_ips, $InstanceVariable{'PublicIpAddress'};
        push @nodetypes, $InstanceVariable{'Name'};
+       
+       if ( $InstanceVariable{'Name'} eq 'Roxie' ){
+         $roxienodes++;
+       }
+       elsif ( $InstanceVariable{'Name'} eq 'Slave' ){
+         $slave_instances++;
+       }
+       else{
+         $supportnodes++;
+       }
      }
    }
    print "In putHPCCInstanceInfoInFiles. scalar(\@InstanceIds)=\"",scalar(@InstanceIds),"\"\n";
@@ -152,6 +276,7 @@ my ($ref_sorted_InstanceInfo)=@_;
      print OUT "$nodetypes[$i]\n";
    }
    close(OUT);
+return ($roxienodes,$slave_instances,$supportnodes);
 }
 #==========================================================================================================
 sub extractLines{

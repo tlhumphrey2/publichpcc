@@ -89,7 +89,7 @@ sub thor_nodes_ips{
      @slave_pip=($master_pip);
   }
   else{
-     @slave_pip=@all[0 .. ($non_support_instances-1)];
+     @slave_pip=@all[0 .. ($slave_instances-1)];
   }
 return ($master_pip, @slave_pip);
 }
