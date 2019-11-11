@@ -73,7 +73,7 @@ $OutputOnceVariables{"slavesPerNode"}=1;
 my %InstanceVariable=%{$sorted_InstanceInfo[1]};
 print "DEBUG: Instance Variables outputted once (ie. NOT arrays):\n";
 foreach (sort keys %OutputOnceVariables){
-  $InstanceVariable{$_} = '$ThisDir/'.$InstanceVariable{$_}.'.pem' if $_ eq 'pem';
+  $InstanceVariable{$_} = "$ThisDir/$InstanceVariable{$_}.pem" if $_ eq 'pem';
   print "DEBUG: \$ValueOfCfgVariable{$_}=$InstanceVariable{$_}\n";
 
   $ValueOfCfgVariable{$_}=$InstanceVariable{$_};
