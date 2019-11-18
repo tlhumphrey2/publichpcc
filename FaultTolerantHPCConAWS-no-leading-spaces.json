@@ -582,6 +582,22 @@
 "chown $sshuser:$sshuser /home/$sshuser/*",
 "chmod 755 /home/$sshuser/*.sh",
 "chmod 755 /home/$sshuser/*.pl",
+"chown $sshuser:$sshuser /home/$sshuser/StopStartHPCC/*",
+"chmod 755 /home/$sshuser/StopStartHPCC/*.sh",
+"chmod 755 /home/$sshuser/StopStartHPCC/*.pl",
+
+"echo SCRIPT: START makeClusterInitVariables.pl",
+{
+"Fn::Join" : [
+" ", 
+[
+"/home/$sshuser/StopStartHPCC/makeClusterInitVariables.pl $sshuser", 
+{ "Ref" : "AWS::Region" },
+{ "Ref": "AWS::StackName" } 
+]
+]
+},
+"echo SCRIPT: COMPLETED makeClusterInitVariables.pl",
 
 "echo SCRIPT: START makeKeypairAndEmailPrivateKey.pl",
 {

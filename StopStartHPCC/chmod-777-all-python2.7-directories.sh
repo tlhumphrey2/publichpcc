@@ -1,0 +1,10 @@
+sudo chmod -R 777 /usr/bin/python2.7
+sudo chmod -R 777 /usr/local/bin/python2.7
+sudo chmod -R 777 /usr/local/lib/python2.7
+sudo chmod -R 777 /usr/local/include/python2.7
+sudo chmod -R 777 /usr/local/lib64/python2.7
+sudo chmod -R 777 /usr/local/lib64/python2.7/site-packages/lib64/python2.7
+sudo chmod -R 777 /usr/lib/python2.7
+sudo chmod -R 777 /usr/include/python2.7
+sudo chmod -R 777 /usr/lib64/python2.7
+sudo chmod -R 777 /usr/lib64/lib64/python2.7

@@ -148,55 +148,40 @@ return $terminated_ip;
 #==========================================================================================================
 sub InstanceVariablesFromInstanceDescriptions{
 my ($region,$stackname)=@_;
-my $re1="(^    - {Key: Name, Value: $stackname--|^    State: {Code: \\d+, Name: |^    - DeviceName: |^        VolumeId: |^    InstanceId: |^    InstanceType: |^    PrivateIpAddress: |^    PublicIpAddress: |^    - {Key: slavesPerNode, Value: '|^    - {Key: HPCCPlatform, Value: |^    - {Key: roxienodes, Value: '|^    - {Key: pem, Value: )";
-$_=`aws ec2 describe-instances --region $region --filter "Name=tag:StackName,Values=$stackname"|$ThisDir/json2yaml.sh|tee $ThisDir/$stackname-instance-descriptions.yaml`;
-print "DEBUG: In InstanceVariablesFromInstanceDescriptions. Size of input is \"",length($_),"\"\n";
+require "$ThisDir/cf_common.pl";
 
-# Get all instance descriptions in the array @instance_description.
-my @instance_description= $_ =~ m/\n(  - AmiLaunchIndex:.+?\n    VirtualizationType:[^\n]+)/gs;
-print "DEBUG: In InstanceVariablesFromInstanceDescriptions. Number of instance descriptions (scalar(\@instance_description)) is ",scalar(@instance_description),"\n";
-my @description=();
-for( my $i=0; $i < scalar(@instance_description); $i++){
-  local $_=$instance_description[$i];
-  $description[$i]=extractLines($_);
-}
-print "DEBUG: In InstanceVariablesFromInstanceDescriptions. OUTPUT: scalar(\@description)=",scalar(@description),"\n";
-my $re2=$re1;
-$re2 =~ s/Key: (\w+)/$1:/g;
-$re2 =~ s/[^\(\|]+?(\w+):/$1/g;
-$re2 =~ s/[^\(\)\|\w]+?//g;
-$re2 =~ s/Value[^\|\(\)]*//g;
-$re2 =~ s/StateCodeName/State/;
-print "DEBUG: In InstanceVariablesFromInstanceDescriptions. 1. re2=\"$re2\"\n";
-my $v=$re2; $v=~s/\|/,/g;
-eval("\@InstanceVariable=$v");
-$re2='\b'.$re2.'\b';
-print "DEBUG: In InstanceVariablesFromInstanceDescriptions. 2. re2=\"$re2\"\n";
-print "DEBUG: In InstanceVariablesFromInstanceDescriptions. \@InstanceVariable=(@InstanceVariable)\n";
+my @DesiredInfo = ();
+$DesiredInfo[0]='InstanceId';
+$DesiredInfo[1]='State';
+$DesiredInfo[2]='LaunchTime';
+$DesiredInfo[3]='InstanceType';
+$DesiredInfo[4]='PublicIpAddress';
+$DesiredInfo[5]='PrivateIpAddress';
+$DesiredInfo[6]='Name';
+$DesiredInfo[7]='HPCCPlatform';
+$DesiredInfo[8]='pem';
+$DesiredInfo[9]='slavesPerNode';
+$DesiredInfo[10]='roxienodes';
+$DesiredInfo[11]='VolumeIds';
 
+my @InstanceInfo0 = getClusterInstanceInfo ($region, $stackname, @DesiredInfo);
 my @InstanceInfo=();
-for( my $i=0; $i < scalar(@description); $i++){
-  my %InstanceVariable=();
-  print "DEBUG: In InstanceVariablesFromInstanceDescriptions. Instance\[$i\]:\n";
-  foreach my $line (@{$description[$i]}){
-    my $l = spaces2dots($1,$line) if $line=~/^( +)/;
-    #print "DEBUG: In InstanceVariablesFromInstanceDescriptions. i=$i line:$l\n";
-    if ($line =~ /$re1(.*)(?:'?})?/){
-      my $s=$1;
-      my $value=$2;
-      $value=~s/'}\s*$|}\s*$//;
-      print "DEBUG: In InstanceVariablesFromInstanceDescriptions. s=\"$s\", value=\"$value\"\n";
-      if ($s =~ /$re2/){
-        my $key=$1;
-        $InstanceVariable{$key}=$value;
-        print "DEBUG: In InstanceVariablesFromInstanceDescriptions. \$InstanceVariable\{$key\}=\"$value\"\n";
-      }
-      else{   
-        print "ERROR: Found string=\"$s\", in line=\"$line\", BUT NO variable found.\n";
-      }
+foreach (@InstanceInfo0){
+  my @info = split(/\s+/,$_);
+  my %InstanceVariable=(); 
+  for( my $i=0; $i < scalar(@info); $i++){
+    local $_ = $info[$i];
+    s/$stackname\-\-(.+)$/$1/;
+    if ( /\bvol\-/ ){
+      s/^\s+//;
+      s/\s+$//;
+      my @vol=@info[$i .. $#info];
+      $_ = \@vol;
+      last;
     }
+    $InstanceVariable{$DesiredInfo[$i]} = $_;
   }
-  $InstanceInfo[$i]=\%InstanceVariable;
+  push @InstanceInfo, \%InstanceVariable;
 }
 
 my @sorted_InstanceInfo=sort { HashValue($a,'Name','a') cmp HashValue($b,'Name','b') } @InstanceInfo;
@@ -205,7 +190,7 @@ return @sorted_InstanceInfo;
 }
 #==========================================================================================================
 sub putHPCCInstanceInfoInFiles{
-my ($ref_sorted_InstanceInfo)=@_;
+my ($ref_sorted_InstanceInfo, @Filenames)=@_;
    my @sorted_InstanceInfo=@$ref_sorted_InstanceInfo;
    print "Entering putHPCCInstanceInfoInFiles. scalar(\@sorted_InstanceInfo)=\"",scalar(@sorted_InstanceInfo),"\"\n";
    #------------------------------------------------------------------------------------
@@ -217,17 +202,17 @@ my ($ref_sorted_InstanceInfo)=@_;
    my $slave_instances=0;
    for( my $i=0; $i < scalar(@sorted_InstanceInfo); $i++){
      my %InstanceVariable=%{$sorted_InstanceInfo[$i]};
-     print "In putHPCCInstanceInfoInFiles. InstanceVariable{'nodetype'}=\"$InstanceVariable{'nodetype'}\"\n";
-     if (($InstanceVariable{'State'} eq 'running') && ($InstanceVariable{'Name'} ne 'Bastion')){
+     print "In putHPCCInstanceInfoInFiles. InstanceVariable{'nodetype'}=\"$InstanceVariable{'Name'}\"\n";
+     if (($InstanceVariable{'State'} eq 'running') && ($InstanceVariable{'Name'} !~ /Bastion/)){
        push @InstanceIds, $InstanceVariable{'InstanceId'};
        push @private_ips, $InstanceVariable{'PrivateIpAddress'};
        push @public_ips, $InstanceVariable{'PublicIpAddress'};
        push @nodetypes, $InstanceVariable{'Name'};
        
-       if ( $InstanceVariable{'Name'} eq 'Roxie' ){
+       if ( $InstanceVariable{'Name'} =~ /Roxie/ ){
          $roxienodes++;
        }
-       elsif ( $InstanceVariable{'Name'} eq 'Slave' ){
+       elsif ( $InstanceVariable{'Name'} =~ /Slave/ ){
          $slave_instances++;
        }
        else{
@@ -237,6 +222,13 @@ my ($ref_sorted_InstanceInfo)=@_;
    }
    print "In putHPCCInstanceInfoInFiles. scalar(\@InstanceIds)=\"",scalar(@InstanceIds),"\"\n";
 
+   if ( scalar(@Filenames) == 4 ){
+     $instance_ids = shift @Filenames;
+     $private_ips = shift @Filenames;
+     $public_ips = shift @Filenames;
+     $nodetypes = shift @Filenames;
+     print "In putHPCCInstanceInfoInFiles. Filenames: ($instance_ids, $private_ips, $public_ips, $nodetypes)\n";
+   }
    #------------------------------------------------------------------------------------
    # Put Instance Ids of HPCC System in the file, $instance_ids.
    #------------------------------------------------------------------------------------
@@ -315,7 +307,6 @@ return @ii;
 sub HashValue{
 my ($varPtr,$key, $ab)=@_;
  my %InstanceVariable=%{$varPtr};
-print "DEBUG: In HashValue. ab=\"$ab\", key=\"$key\", value=\"$InstanceVariable{$key}\"\n";
 return $InstanceVariable{$key}; 
 }
 #==========================================================================================================
