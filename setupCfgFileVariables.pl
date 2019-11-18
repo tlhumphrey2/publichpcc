@@ -73,7 +73,7 @@ $OutputOnceVariables{"slavesPerNode"}=1;
 my %InstanceVariable=%{$sorted_InstanceInfo[1]};
 print "DEBUG: Instance Variables outputted once (ie. NOT arrays):\n";
 foreach (sort keys %OutputOnceVariables){
-  $InstanceVariable{$_} = '$ThisDir/'.$InstanceVariable{$_}.'.pem' if $_ eq 'pem';
+  $InstanceVariable{$_} = "$ThisDir/$InstanceVariable{$_}.pem" if $_ eq 'pem';
   print "DEBUG: \$ValueOfCfgVariable{$_}=$InstanceVariable{$_}\n";
 
   $ValueOfCfgVariable{$_}=$InstanceVariable{$_};
@@ -196,16 +196,27 @@ for( my $i=0; $i < scalar(@sorted_InstanceInfo); $i++){
   if ( ($InstanceVariable{'State'} ne 'running') && ( $InstanceVariable{'Name'} eq $clustercomponent ) ){
     $DownedInstanceId=$InstanceVariable{'InstanceId'};
     $DownedNodeType=$InstanceVariable{'Name'};
-    $DownedVolumeId=$InstanceVariable{'VolumeId'};
+    $DownedVolumeId='';
     # Must get IPs from cfg_BestHPCC.sh which was loaded in a the top of this script
-    ( $DownedPublicIP, $DownedPrivateIP ) = getIPsGiveInstanceId($DownedInstanceId)
+    ( $DownedPublicIP, $DownedPrivateIP ) = getIPsGivenInstanceId($DownedInstanceId)
   }
   
-  foreach my $v (@InstanceVariable){
+  foreach my $v (keys %InstanceVariable){
     if ( ! $OutputOnceVariables{$v} ){
       $display_v = ($v eq 'Name')? 'nodetype' : $v ;
-      print "DEBUG: $display_v\[$i\]=$InstanceVariable{$v}\n";
-      print OUT "$display_v\[$i\]=$InstanceVariable{$v}\n";
+      next if $display_v =~ /^\s*$/;
+      if ( $v eq 'VolumeIds' ){
+         print "DEBUG: Found VolumeIds. v=\"$v\".\n";
+         my @vol = @{$InstanceVariable{$v}};
+	 for( my $j=0; $j < scalar(@vol); $j++){
+           print "DEBUG: VolumeId\[$i\]\[$j\]=$vol[$j]\n";
+           print OUT "VolumeId\[$i\]\[$j\]=$vol[$j]\n";
+	 }
+      }
+      else{
+        print "DEBUG: $display_v\[$i\]=$InstanceVariable{$v}\n";
+        print OUT "$display_v\[$i\]=$InstanceVariable{$v}\n";
+      }
     }
   }
 }
@@ -283,7 +294,7 @@ my $email=`cat $ThisDir/destination_email`; chomp $email;
 return $email;
 }
 #==============================================================================
-sub getIPsGiveInstanceId{
+sub getIPsGivenInstanceId{
 my ($InstanceId)=@_;
   my $public_ip = '';
   my $private_ip = '';

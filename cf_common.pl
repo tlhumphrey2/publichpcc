@@ -1,12 +1,56 @@
 #!/usr/bin/perl
+$ThisDir=($0=~/^(.*)\//)? $1 : ".";
+#=====================================================================
+# Note: The qElement hash tells what information this routine can give about cluster instances.
+# Also the order is the same as the order of elements in @DesiredInfo
+sub getClusterInstanceInfo{
+my ($region, $stackname, @DesiredInfo)=@_;
+  my %qElement = ();
+  $qElement{'InstanceId'} = 'InstanceId';
+  $qElement{'State'} = 'State.Name';
+  $qElement{'LaunchTime'} = 'LaunchTime';
+  $qElement{'StateChangeReason'} = 'StateTransitionReason';
+  $qElement{'VolumeIds'} = 'BlockDeviceMappings[*].[Ebs.VolumeId, DeviceName]';
+  $qElement{'PublicIp'} = 'PublicIpAddress';
+  $qElement{'PublicIpAddress'} = 'PublicIpAddress';
+  $qElement{'PrivateIp'} = 'PrivateIpAddress';
+  $qElement{'PrivateIpAddress'} = 'PrivateIpAddress';
+  $qElement{'InstanceType'} = 'InstanceType';
+  $qElement{'InstanceName'} = "[Tags[?Key=='Name'].Value][0][0]";
+  $qElement{'Name'} = "[Tags[?Key=='Name'].Value][0][0]";
+  $qElement{'pem'} = "[Tags[?Key=='pem'].Value][0][0]";
+  $qElement{'slavesPerNode'} = "[Tags[?Key=='slavesPerNode'].Value][0][0]";
+  $qElement{'roxienodes'} = "[Tags[?Key=='roxienodes'].Value][0][0]";
+  $qElement{'HPCCPlatform'} = "[Tags[?Key=='HPCCPlatform'].Value][0][0]";
+
+  my $filter = ($stackname !~ /^\s*$/)? "--filter \"Name=tag:StackName,Values=$stackname\"" : '';
+
+  my @qElement = ();
+  foreach (@DesiredInfo){
+    push @qElement, $qElement{$_};
+  }
+  my $qElements = join(", ",@qElement);
+  $_ = `aws ec2 describe-instances --region $region $filter --query "Reservations[*].Instances[*].[$qElements]" --output text`;
+  my @InstanceInfo = split(/\n/,$_);
+  my @OutInfo=();
+  foreach (@InstanceInfo){
+     if ( /\bvol\-/ ){
+       s/([^\s])\s+([^\s])/$1:$2/;
+       $OutInfo[$#OutInfo] .= " $_";
+     }
+     else{
+       s/\s+/ /g;
+       push @OutInfo, $_;
+     }
+  }
+  return @OutInfo;
+}
 #=====================================================================
 # $stackname_prefix is all of the prefix except the last dash and the
 #  digits that follow (just to the right of) it.
 # This routine finds all the StackNames with the prefix of $stackname_prefix
 #  that were gotten by "aws cloudformation list-stacks". Sorts then
 #  and returns 1 more than the one with the largest digits.
-$ThisDir=($0=~/^(.*)\//)? $1 : ".";
-print "DEBUG: Entering cf_common.pl. ThisDir=\"$ThisDir\"\n";
 
 sub NextStackNumber{
 my ($stackname_prefix,$region)=@_;

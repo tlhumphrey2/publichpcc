@@ -8,7 +8,7 @@ while(<CFG>){
    chomp;
    next if /^#/ || /^\s*$/;
    
-   if ( /^(\w+(?:\[\d+\])?)=(.*)\s*$/ ){
+   if ( /^(\w+(?:\[\d+\](?:\[\d+\])?)?)=(.*)\s*$/ ){
       my $env_variable=$1;
       my $value=$2;
       $value=$1 if ($value =~ /^"(.*)"$/);

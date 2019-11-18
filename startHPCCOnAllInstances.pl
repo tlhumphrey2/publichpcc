@@ -28,7 +28,7 @@ if (($ThisClusterComponent eq 'Master')){
   my $message = checkStatusOfCluster($stackname,$EIP);
   AlertUserOfChangeInRunStatus($region, $email, $stackname, $message);
 }
-# If this isn't a Master (i.e. thor or roxie) and instances have been terminated
+# If this isn't a Master (i.e. thor or roxie) and (instances have been terminated OR Master already exists)
 #   (i.e. not initial launch).
 elsif (($ThisClusterComponent ne 'Master') && ($terminated_ip ne '')){
    my $MasterIP=`head -1 $private_ips`;chomp $MasterIP;
