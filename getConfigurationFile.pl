@@ -2,7 +2,10 @@
 #getConfigurationFile.pl
 local $ThisDir=($0=~/^(.*)\//)? $1 : ".";
 
-$cfgfile="$ThisDir/cfg_BestHPCC.sh";
+my $home = ( ($ThisDir =~ /^\/home\/[^\/]+\/[^\/]+$/) || ($ThisDir =~ /^[^\/]+\/?$/ ) )? "$ThisDir/.." : $ThisDir;
+print "DEBUG: In getConfigurationFile.pl. home=\"$home\"\n";
+
+$cfgfile="$home/cfg_BestHPCC.sh";
 open(CFG,$cfgfile) || die "Can't open for input cfgfile=\"$cfgfile\"\n";
 while(<CFG>){
    chomp;
