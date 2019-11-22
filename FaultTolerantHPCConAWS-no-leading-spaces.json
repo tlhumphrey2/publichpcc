@@ -908,6 +908,22 @@
 "chmod 755 /home/$sshuser/*.sh",
 "chmod 755 /home/$sshuser/*.pl",
 "chmod 400 /home/$sshuser/*.pem",
+"chown $sshuser:$sshuser /home/$sshuser/StopStartHPCC/*",
+"chmod 755 /home/$sshuser/StopStartHPCC/*.sh",
+"chmod 755 /home/$sshuser/StopStartHPCC/*.pl",
+
+"echo SCRIPT: START makeClusterInitVariables.pl",
+{
+"Fn::Join" : [
+" ", 
+[
+"/home/$sshuser/StopStartHPCC/makeClusterInitVariables.pl $sshuser", 
+{ "Ref" : "AWS::Region" },
+{ "Ref": "AWS::StackName" } 
+]
+]
+},
+"echo SCRIPT: COMPLETED makeClusterInitVariables.pl",
 
 "# Step 5. Fill configuration file, /home/$sshuser/cfg_BestHPCC.sh, with this hpcc's configuration variables",
 "echo SCRIPT: starting setupCfgFileVariables.pl",
@@ -1222,6 +1238,22 @@
 "chmod 755 /home/$sshuser/*.sh",
 "chmod 755 /home/$sshuser/*.pl",
 "chmod 400 /home/$sshuser/*.pem",
+"chown $sshuser:$sshuser /home/$sshuser/StopStartHPCC/*",
+"chmod 755 /home/$sshuser/StopStartHPCC/*.sh",
+"chmod 755 /home/$sshuser/StopStartHPCC/*.pl",
+
+"echo SCRIPT: START makeClusterInitVariables.pl",
+{
+"Fn::Join" : [
+" ", 
+[
+"/home/$sshuser/StopStartHPCC/makeClusterInitVariables.pl $sshuser", 
+{ "Ref" : "AWS::Region" },
+{ "Ref": "AWS::StackName" } 
+]
+]
+},
+"echo SCRIPT: COMPLETED makeClusterInitVariables.pl",
 
 "# Step 5. Fill configuration file, /home/$sshuser/cfg_BestHPCC.sh, with this hpcc's configuration variables",
 "echo SCRIPT: starting setupCfgFileVariables.pl",
@@ -1531,6 +1563,22 @@
 "chmod 755 /home/$sshuser/*.sh",
 "chmod 755 /home/$sshuser/*.pl",
 "chmod 400 /home/$sshuser/*.pem",
+"chown $sshuser:$sshuser /home/$sshuser/StopStartHPCC/*",
+"chmod 755 /home/$sshuser/StopStartHPCC/*.sh",
+"chmod 755 /home/$sshuser/StopStartHPCC/*.pl",
+
+"echo SCRIPT: START makeClusterInitVariables.pl",
+{
+"Fn::Join" : [
+" ", 
+[
+"/home/$sshuser/StopStartHPCC/makeClusterInitVariables.pl $sshuser", 
+{ "Ref" : "AWS::Region" },
+{ "Ref": "AWS::StackName" } 
+]
+]
+},
+"echo SCRIPT: COMPLETED makeClusterInitVariables.pl",
 
 "# Step 5. Fill configuration file, /home/$sshuser/cfg_BestHPCC.sh, with this hpcc's configuration variables",
 "echo SCRIPT: starting setupCfgFileVariables.pl",

@@ -1,5 +1,29 @@
 #!/usr/bin/perl
 #==========================================================================================================
+# USAGE EXAMPLE: @asgnames = getASGNames( $region, $stackname, $filter );
+sub getASGNames{
+my ( $region, $stackname, $filter )=@_;
+print "aws autoscaling describe-auto-scaling-groups --region $region\n";
+$_=`aws autoscaling describe-auto-scaling-groups --region $region`;
+
+# 2 greps. Inter-most gets only lines containing both 'AutoScalingGroupARN' and $stackname. The out-most grep
+# extracts just the ASG name. All names are put in @asgnames.
+@asgnames=grep($_=extractASGName($_),grep(/\"AutoScalingGroupARN\":.+$stackname/,split(/\n+/,$_)));
+print "asgnames=(",join(",",@asgnames),")\n";
+
+@asgnames = grep(/$filter/,@asgnames) if $filter !~ /^\s*$/;
+
+return @asgnames;
+}
+#------------------------------------------
+sub extractASGName{
+my ( $a )=@_;
+local $_=$a;
+  s/^.*autoScalingGroupName\///;
+  s/\",\s*$//;
+return $_;
+}
+#==========================================================================================================
 sub getComponentIPsByLaunchTime{
 my ($stackname, $nodetype)=@_;
 print "DEBUG: Entering getComponentIPsByLaunchTime. stackname=\"$stackname\", nodetype=\"$nodetype\"\n";
@@ -202,7 +226,7 @@ my ($ref_sorted_InstanceInfo, @Filenames)=@_;
    my $slave_instances=0;
    for( my $i=0; $i < scalar(@sorted_InstanceInfo); $i++){
      my %InstanceVariable=%{$sorted_InstanceInfo[$i]};
-     print "In putHPCCInstanceInfoInFiles. InstanceVariable{'nodetype'}=\"$InstanceVariable{'Name'}\"\n";
+     #print "In putHPCCInstanceInfoInFiles. InstanceVariable{'nodetype'}=\"$InstanceVariable{'Name'}\"\n";
      if (($InstanceVariable{'State'} eq 'running') && ($InstanceVariable{'Name'} !~ /Bastion/)){
        push @InstanceIds, $InstanceVariable{'InstanceId'};
        push @private_ips, $InstanceVariable{'PrivateIpAddress'};
@@ -234,7 +258,7 @@ my ($ref_sorted_InstanceInfo, @Filenames)=@_;
    #------------------------------------------------------------------------------------
    open(OUT,">$instance_ids") || die "Can't open for output: \"$instance_ids\"\n";
    for( my $i=0; $i < scalar(@InstanceIds); $i++){
-     print "In putHPCCInstanceInfoInFiles. OUTPUT InstanceIds\[$i\]=$InstanceIds[$i]\n";
+     #print "In putHPCCInstanceInfoInFiles. OUTPUT InstanceIds\[$i\]=$InstanceIds[$i]\n";
      print OUT "$InstanceIds[$i]\n";
    }
    close(OUT);
@@ -244,7 +268,7 @@ my ($ref_sorted_InstanceInfo, @Filenames)=@_;
    #------------------------------------------------------------------------------------
    open(OUT,">$private_ips") || die "Can't open for output: \"$private_ips\"\n";
    for( my $i=0; $i < scalar(@private_ips); $i++){
-     print "In putHPCCInstanceInfoInFiles. OUTPUT private_ips\[$i\]=$private_ips[$i]\n";
+     #print "In putHPCCInstanceInfoInFiles. OUTPUT private_ips\[$i\]=$private_ips[$i]\n";
      print OUT "$private_ips[$i]\n";
    }
    close(OUT);
@@ -254,7 +278,7 @@ my ($ref_sorted_InstanceInfo, @Filenames)=@_;
    #------------------------------------------------------------------------------------
    open(OUT,">$public_ips") || die "Can't open for output: \"$public_ips\"\n";
    for( my $i=0; $i < scalar(@public_ips); $i++){
-     print "In putHPCCInstanceInfoInFiles. OUTPUT public_ips\[$i\]=$public_ips[$i]\n";
+     #print "In putHPCCInstanceInfoInFiles. OUTPUT public_ips\[$i\]=$public_ips[$i]\n";
      print OUT "$public_ips[$i]\n";
    }
    close(OUT);
@@ -264,7 +288,7 @@ my ($ref_sorted_InstanceInfo, @Filenames)=@_;
    #------------------------------------------------------------------------------------
    open(OUT,">$nodetypes") || die "Can't open for output: \"$nodetypes\"\n";
    for( my $i=0; $i < scalar(@nodetypes); $i++){
-     print "In putHPCCInstanceInfoInFiles. OUTPUT nodetypes\[$i\]=$nodetypes[$i]\n";
+     #print "In putHPCCInstanceInfoInFiles. OUTPUT nodetypes\[$i\]=$nodetypes[$i]\n";
      print OUT "$nodetypes[$i]\n";
    }
    close(OUT);

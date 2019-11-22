@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 $ThisDir=($0 =~ /^(.+)[\\\/]/)? $1 : "." ;
 require "$ThisDir/ClusterInitVariables.pl";
+require "/home/$sshuser/common.pl";
 
 # Note: If ASG is given then it must be either RoxieASG or SlaveASG
 $ASG = (scalar(@ARGV) > 0)? shift @ARGV : '';
@@ -15,21 +16,7 @@ if ( ! defined($stackname) || ($stackname=~/^\s*$/) ){
   }
 }
 
-print "\$asgnames=aws autoscaling describe-auto-scaling-groups --region $region\|egrep AutoScalingGroupARN\|sed -e \"s/^.*autoScalingGroupName//\" -e \"s/\", *//\"\|egrep $stackname\n";
-$_=`aws autoscaling describe-auto-scaling-groups --region $region`;
-
-# 2 greps. Inter-most gets only lines containing both 'AutoScalingGroupARN' and $stackname. The out-most grep
-# extracts just the ASG name. All names are put in @asgnames.
-@asgnames=grep($_=extractASGName($_),grep(/\"AutoScalingGroupARN\":.+$stackname/,split(/\n+/,$_)));
-print "asgnames=(",join(",",@asgnames),")\n";
-
-sub extractASGName{
-my ( $a )=@_;
-local $_=$a;
-  s/^.*autoScalingGroupName\///;# Remove everything before ASG name
-  s/",\s*$//;                   # Remove everything after ASG name
-return $_;
-}
+@asgnames = getASGNames( $region, $stackname );
 #-----------------------------------------------------------------------------------------------------
 # For each autoscaling group whose name is in $asgnames, suspend these processes: Launch Terminate HealthCheck
 foreach my $asgname (@asgnames){
