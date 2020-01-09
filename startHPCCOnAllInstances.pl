@@ -22,7 +22,7 @@ if (($ThisClusterComponent eq 'Master')){
   $_=`/opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init restart 2>&1`;
   print "In $0. rc=\"$_\"\n";
 
-  $EIP=getMasterEIP($region, $EIPAllocationId);
+  $EIP=getMasterEIP($stackname, $region, $EIPAllocationId);
   print "In $0 after calling getMasterEIP. EIP=\"$EIP\".\n";
 
   my $message = checkStatusOfCluster($stackname,$EIP);
@@ -38,11 +38,13 @@ elsif (($ThisClusterComponent ne 'Master') && ($terminated_ip ne '')){
    my $rc=`ssh -o StrictHostKeyChecking=no -i $pem -t -t $sshuser\@$MasterIP "sudo $ThisDir/forceUpdateDaliEnv.pl $ThisInstancePrivateIP $ThisClusterComponent $terminated_ip"`;
    print "rc=\"$rc\"\n";
 }
+=pod
+# COMMENTED OUT BECAUSE ADDING INSTANCES NOT DONE BY USERDATA NOW (20200109) 
 # if this instance is slave or roxie and master already exists then adjust process lines of env 
 #  and push to all instances and restart cluster.
 elsif (($ThisClusterComponent ne 'Master') && ($master_exists ne '')){
-  print "In $0. Slave or Roxie & Master exists. orderComponentProcessLinesByLaunchTime($stackname, $ThisClusterComponent)\n";
-  my $new_env_file = orderComponentProcessLinesByLaunchTime($stackname, $ThisClusterComponent);
+  print "In $0. Slave or Roxie & Master exists. orderComponentProcessLinesByLaunchTime( '/etc/HPCCSystems/environment.xml', $stackname, $ThisClusterComponent)\n";
+  my $new_env_file = orderComponentProcessLinesByLaunchTime( '/etc/HPCCSystems/environment.xml', $stackname, $ThisClusterComponent);
   print "In $0. cp -v $new_env_file $out_environment_file\n";
   $_=`cp -v $new_env_file $out_environment_file`;
   print "In $0. cp new_environment.xml return code is \"$_\"\n";
@@ -62,6 +64,7 @@ elsif (($ThisClusterComponent ne 'Master') && ($master_exists ne '')){
   my $message = checkStatusOfCluster($stackname,$EIP);
   AlertUserOfChangeInRunStatus($region, $email, $stackname, $message);
 }
+=cut
 else{
   print "In $0. DID NOT START CLUSTER.\n";
 }

@@ -23,7 +23,7 @@ elsif ( "$nodetype" eq 'Roxie' ){
 }
 
 sleep 5;
-$EIP=getMasterEIP($region, $EIPAllocationId);
+$EIP=getMasterEIP($stackname, $region, $EIPAllocationId);
 print "In $0 after calling getMasterEIP. EIP=\"$EIP\".\n";
 
 $message=checkStatusOfCluster($stackname,$EIP);

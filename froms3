@@ -1,0 +1,3 @@
+#!/usr/bin/perl
+$f=shift @ARGV;
+system("aws s3 cp s3://publichpcc/$f $f");

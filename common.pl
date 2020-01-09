@@ -25,33 +25,31 @@ return $_;
 }
 #==========================================================================================================
 sub getComponentIPsByLaunchTime{
-my ($stackname, $nodetype)=@_;
-print "DEBUG: Entering getComponentIPsByLaunchTime. stackname=\"$stackname\", nodetype=\"$nodetype\"\n";
-$_ = `egrep "^    PrivateIpAddress:|^    LaunchTime:|^    - {Key: Name, Value: $stackname--" $ThisDir/$stackname-instance-descriptions.yaml`;
-@in = split(/\n/,$_);
-$line = '';
-$i=1;
-foreach (@in){
-  s/^ +//;
-  s/\{.+--(.+)\}/$1/g;
-  if ( ($i % 3) == 0 ){
-    $line .= ' '.$_;
-    push @line, $line;
-    $line = '';
+my ($stackname, $region, $ip_type, @component)=@_;
+require "$ThisDir/cf_common.pl";
+require "$ThisDir/common.pl";
 
+  my @DesiredInfo = ();
+  $DesiredInfo[0]='LaunchTime';
+  $DesiredInfo[1]=($ip_type eq 'private')? 'PrivateIpAddress': 'PublicIpAddress';
+  $DesiredInfo[2]='Name';
+  $DesiredInfo[3]='State';
+
+  my @InstanceInfo0 = getClusterInstanceInfo ($region, $stackname, @DesiredInfo);
+  #print "DEBUG: ",join("\nDEBUG: ",@InstanceInfo0),"\n";
+   
+  my $undesired_states = '\b(?:stopp|terminat)';
+  @InstanceInfo = grep(!/$undesired_states/,@InstanceInfo0);
+
+  my @SortedInstanceInfo = sort {(split(/\s+/,$a))[0] cmp (split(/\s+/,$b))[0]} @InstanceInfo;
+  my $nodetype = '(?:' . join('|',@component) . ')';
+  my @NodeTypeInstance = grep(/\-\-$nodetype\b/,@SortedInstanceInfo);
+  
+  my @PrivateIP = ();
+  foreach (@NodeTypeInstance){
+    push @PrivateIP, (split(/\s+/,$_))[1];
   }
-  else{
-    $line .= ' '.$_;
-  }
-
-  $i++;
-}
-
-@line = sort(@line);
-@line = grep(/$nodetype/,@line);
-@line = grep(s/^.+PrivateIpAddress: (\d+\.\d+.\d+.\d+) - $nodetype\s*$/$1/,@line);
-print "DEBUG: Leaving getComponentIPsByLaunchTime. Returned IPs are: \@line=(",join(", ",@line),")\n";
-return @line;
+return @PrivateIP;
 }
 #==========================================================================================================
 sub makeComponentProcessLines{
@@ -78,10 +76,10 @@ return @process_line;
 }
 #==========================================================================================================
 sub replaceComponentProcessLines{
-my ( $nodetype, @process_line )=@_;
+my ( $envfile, $nodetype, @process_line )=@_;
 print "DEBUG: Entering replaceComponentProcessLines. nodetype=\"$nodetype\", \@process_line=(",join(", ",@process_line),")\n";
   @process_line = grep(! /^\s*$/,@process_line);
-  local $_ = `cat /etc/HPCCSystems/environment.xml`;
+  local $_ = `cat $envfile`;
   my @line = split(/\n/,$_);
   my $slave_process = '<ThorSlaveProcess';
   my $roxie_process = '<RoxieServerProcess';
@@ -116,23 +114,44 @@ print "DEBUG: Entering replaceComponentProcessLines. nodetype=\"$nodetype\", \@p
 return join("\n",@new);
 }
 #==========================================================================================================
-# This routine replaces component (either Slave or Roxie) process lines with lines ordered by launch time
+# This routine replaces component (either Slave or Roxie) process lines with process lines ordered by launch time
 sub orderComponentProcessLinesByLaunchTime{
-my ($stackname, $nodetype)=@_;
+my ($envfile, $stackname, $region, $nodetype)=@_;
+  print "Entering orderComponentProcessLinesByLaunchTime. envfile=\"$envfile\", stackname=\"$stackname\", region=\"$region\", nodetype=\"$nodetype\".\n";
 
-  my @IPs = getComponentIPsByLaunchTime($stackname, $nodetype);
-  print "In fixComponentProcessLines. ",join("\nIn fixComponentProcessLines. ",@IPs),"\n";
+  print "In orderComponentProcessLinesByLaunchTime. getComponentIPsByLaunchTime($stackname, $region, 'private', ($nodetype))\n";
+  my @IPs = getComponentIPsByLaunchTime($stackname, $region, 'private', ($nodetype));
+  print "In orderComponentProcessLinesByLaunchTime. ",join("\nIn orderComponentProcessLinesByLaunchTime. ",@IPs),"\n";
 
+  print "In orderComponentProcessLinesByLaunchTime. makeComponentProcessLines( $nodetype, @IPs )\n";
   my @process_line = makeComponentProcessLines( $nodetype, @IPs );
   print "\n============================ Process Lines ============================\n";
-  print "In fixComponentProcessLines. ",join("\nIn fixComponentProcessLines. ",@process_line),"\n";
+  print "In orderComponentProcessLinesByLaunchTime. ",join("\nIn orderComponentProcessLinesByLaunchTime. ",@process_line),"\n";
 
-  my $new_environment = replaceComponentProcessLines( $nodetype, @process_line );
+  print "In orderComponentProcessLinesByLaunchTime. replaceComponentProcessLines( $envfile, $nodetype, @process_line )\n";
+  my $new_environment = replaceComponentProcessLines( $envfile, $nodetype, @process_line );
   open(OUT,">$ThisDir/new_environment.xml") || die "Can't open for output: \"$ThisDir/new_environment.xml\"\n";
-  print OUT $new_environment;
+  print OUT "$new_environment\n";
   close(OUT);
   print "In fixComponentProcessLines. new_environment.xml file=\"$ThisDir/new_environment.xml\"\n";
 return "$ThisDir/new_environment.xml";
+}
+#==========================================================================================================
+# EXAMPLE USAGE: orderEnvProcessLinesByLaunchTime('/etc/HPCCSystems/environment.xml', $stackname, $region, 'Slave');
+sub orderEnvProcessLinesByLaunchTime{
+my ($envfile, $stackname, $region, $nodetype)=@_;
+  print "Enter orderEnvProcessLinesByLaunchTime. orderComponentProcessLinesByLaunchTime( $envfile, $stackname, $region, $nodetype)\n";
+  my $new_env_file = orderComponentProcessLinesByLaunchTime( $envfile, $stackname, $region, $nodetype);
+  print "In orderEnvProcessLinesByLaunchTime.. cp -v $new_env_file $out_environment_file\n";
+  $_=`cp -v $new_env_file $envfile`;
+  print "In orderEnvProcessLinesByLaunchTime.. cp new_environment.xml return code is \"$_\"\n";
+  if ( $envfile eq '/etc/HPCCSystems/environment.xml' ){
+    print "In orderEnvProcessLinesByLaunchTime.. cp -v $new_env_file $created_environment_file\n";
+    $_=`cp -v $new_env_file $created_environment_file`;
+  }
+  else{
+    print "In orderEnvProcessLinesByLaunchTime. DID NOT cp -v $new_env_file created_environment_file\n";
+  }
 }
 #==========================================================================================================
 sub getSshUser{
@@ -517,8 +536,11 @@ return $message;
 }
 #==========================================================================================================
 sub getMasterEIP{
-my ($region, $EIPAllocationId)=@_;
+my ($stackname, $region, $EIPAllocationId)=@_;
 print "Entering getMasterEIP. region=\"$region\", EIPAllocationId=\"$EIPAllocationId\".\n";
+if ( $EIPAllocationId =~ /^\s*$/ ){
+  $EIPAllocationId = `aws s3 cp s3://$stackname/EIPAllocationId -`; chomp $EIPAllocationId;
+}
 print "In getMasterEIP: aws ec2 describe-addresses --allocation-ids $EIPAllocationId --region $region|$ThisDir/json2yaml.sh\n";
 local $_=`aws ec2 describe-addresses --allocation-ids $EIPAllocationId --region $region|$ThisDir/json2yaml.sh`;
 my $ip=$1 if /PublicIp: (\d+(?:\.\d+){3})/s;
