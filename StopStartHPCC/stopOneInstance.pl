@@ -6,7 +6,7 @@ This script does:
 3. Attaches all instances to their asg.
 =cut
 
-$ThisDir=($0 =~ /^(.+)[\\\/]/)? $1 : "." ;
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 require "$ThisDir/ClusterInitVariables.pl";
 require "$ThisDir/formatDateTimeString.pl";
 

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-$ThisDir=($0=~/^(.*)\//)? $1 : ".";
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 $xmlfile=shift @ARGV || die "Usage Error $0 FILE NAME MUST be 1st argument on commandline.\n";
 $nChannels=shift @ARGV || die "Usage Error $0 NUMBER OF CHANNELS MUST be 2nd argument on commandline.\n";
 die "Usage Error $0, 2nd argment WAS NOT NUMERIC ($nChannels).\n" if $nChannels !~ /^\d+$/; 

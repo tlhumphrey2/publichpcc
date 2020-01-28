@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 @argv=@ARGV;
 print "DEBUG: Entering setup_zz_zNxlarge_disks.pl. JUST AFTER 1ST LINE. \@argv=(",join(", ",@argv),")\n";
-$ThisDir=($0=~/^(.*)\//)? $1 : ".";
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 require "$ThisDir/getConfigurationFile.pl";
 require "$ThisDir/common.pl";
 $sshuser=getSshUser();

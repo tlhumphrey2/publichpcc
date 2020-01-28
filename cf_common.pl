@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-$ThisDir=($0=~/^(.*)\//)? $1 : ".";
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 #=====================================================================
 # Note: The qElement hash tells what information this routine can give about cluster instances.
 # Also the order is the same as the order of elements in @DesiredInfo

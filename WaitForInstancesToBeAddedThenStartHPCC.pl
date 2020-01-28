@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-$ThisDir=($0=~/^(.*)\//)? $1 : ".";
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 =pod
 sudo ./WaitForInstancesToBeAddedThenStartHPCC.pl $stackname $region $pem &> ./WaitForInstancesToBeAddedThenStartHPCC.log
 =cut
@@ -14,6 +14,7 @@ require "$ThisDir/cf_common.pl";
 require "$ThisDir/common.pl";
 
 # Wait 20 seconds before checking if hpcc platform installed
+print "DEBUG: In WaitForInstancesToBeAddedThenStartHPCC.pl Wait 20 seconds before continuing into loop.\n";
 sleep(20);
 #=============================================================================================
 # After updating stack

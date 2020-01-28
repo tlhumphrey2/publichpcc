@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-$ThisDir=($0=~/^(.*)\//)? $1 : ".";
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 
 require "$ThisDir/getConfigurationFile.pl";
 require "$ThisDir/cf_common.pl";
@@ -19,4 +19,3 @@ if ( ($ThisClusterComponent ne 'Master') && (scalar(@terminated)>0) ){
   print OUT "terminated_ip=$terminated_ip\n";
   close(OUT);
 }
-

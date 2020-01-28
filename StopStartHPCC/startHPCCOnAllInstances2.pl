@@ -2,7 +2,7 @@
 
 my $action=(scalar(@ARGV)>0)? shift @ARGV : 'start';
 
-$ThisDir=($0 =~ /^(.+)[\\\/]/)? $1 : "." ;
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 require "$ThisDir/ClusterInitVariables.pl";
 
 $PingTries=3;

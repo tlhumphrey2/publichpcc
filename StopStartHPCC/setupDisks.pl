@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 print "Entering setupDisks.pl\n";
 
-$ThisDir=($0 =~ /^(.+)[\\\/]/)? $1 : "." ;
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 require "$ThisDir/ClusterInitVariables.pl";
 
 if ( scalar(@ARGV)>0 ){

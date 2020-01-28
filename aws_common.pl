@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #=====================================================================
-$ThisDir=($0=~/^(.*)\//)? $1 : ".";
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 sub getPublicIPs{
 my ($region, @instance_id)=@_;
 my @public_ip=();

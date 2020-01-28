@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # sudo perl genKeysAndPush.pl
-$ThisDir=($0=~/^(.*)\//)? $1 : ".";
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 
 require "$ThisDir/getConfigurationFile.pl";
 

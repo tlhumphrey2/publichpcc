@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #cpMetadataFilesFromS3ToNode.pl
-$ThisDir=($0=~/^(.*)\//)? $1 : ".";
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 
 $thisDir = ( $0 =~ /^(.+)\// )? $1 : '.';
 

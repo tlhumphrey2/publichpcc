@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-$ThisDir=($0=~/^(.*)\//)? $1 : ".";
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 require "$ThisDir/getConfigurationFile.pl";
 
 for ( my $i=0; $i < scalar(@InstanceId); $i++){

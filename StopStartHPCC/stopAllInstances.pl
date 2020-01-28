@@ -1,26 +1,27 @@
 #!/usr/bin/perl
+
+#===================================================================
+# NOTE: This scripts REQUIRES the aws cli be installed and configured.
+#===================================================================
 =pod
 
 This script does:
-1. Stop HPCC
-2. Detach all instances from their ASGs and decrement autoscaling capacity.
-3. Stop all instances that have been detached (STOP MASTER instance LAST).
+1. suspend ASG processes: Launch Terminate HealthCheck
+2. Stop HPCC System if there is one
+3. Stop all instances that are attached to an ASG.
 =cut
-$ThisDir=($0 =~ /^(.+)[\\\/]/)? $1 : "." ;
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 require "$ThisDir/ClusterInitVariables.pl";
 require "$ThisDir/formatDateTimeString.pl";
 
 my $dt=formatDateTimeString();print "$dt Entering $0.\n";
 
+# 1. suspend ASG processes: Launch Terminate HealthCheck
 print("$ThisDir/suspendASGProcesses.pl\n");
 system("$ThisDir/suspendASGProcesses.pl");
 
-#===================================================================
-# NOTE: This scripts REQUIRES the aws cli be installed and configured.
-#===================================================================
-
+# 2. Stop HPCC System if there is one
 if ( ! defined($no_hpcc) ){
- # 1. Stop HPCC System
  my $dt=formatDateTimeString(); print("$dt $ThisDir/stopHPCCOnAllInstances.pl\n");
  my $rc=`$ThisDir/stopHPCCOnAllInstances.pl`;
  print "$dt $rc";
@@ -31,8 +32,10 @@ if ( ! defined($no_hpcc) ){
 }
 
 #-------------------------
-# 2. Detach all instances from their ASGs and decrement autoscaling capacity.
-# 3. Stop all instances that have been detached (STOP MASTER instance LAST).
+# 3. Stop all instances that are attached to an ASG.
+#    1st get all ASG descriptions in $region
+#    2nd get name of each ASG
+#    3rd use $stackname to filter ASG descriptions
 #-------------------------
 
 # IF ! defined($no_hpcc) then we assume there is a possibility of one or more ASGs
@@ -47,14 +50,6 @@ if ( ! defined($no_hpcc) && defined($stackname) ){
   @asgnames=ArrayOfValuesForKey('AutoScalingGroupName',$asgs_descriptions);
   @asgnames=grep(/\b$stackname\b/,@asgnames);
   my $dt=formatDateTimeString();print "$dt After getting \@asgnames from describe-auto-scaling-instances. \@asgnames=(",join(",",@asgnames),")\n";
-
-  # Remove MasterASG because it has already been removed
-  my @z=();
-  foreach (@asgnames){
-       push @z, $_ if ($in_asgname eq '') || ( /$in_asgname/ );
-  }
-  @asgnames=@z;
-  #print "BEGIN ASGs\n",join("\n",@asgnames),"\nEND ASGs\n"; # exit; # DEBUG DEBUG DEBUG
 
   @asg_description=splitASGs($asgs_descriptions);
   @asg_description=grep(/\b$stackname/,@asg_description);
@@ -77,15 +72,7 @@ foreach my $asgname (@asgnames){
   my $dt=formatDateTimeString(); print("$dt Push onto \@asgname_and_instances this asg's name and all its instances:$asgname:$asg_instance_ids\n"); 
   push  @asgname_and_instances, "$asgname:$asg_instance_ids";
 
-  if ( ! $ASGSuspended ){
   foreach my $asg_instance_id (@asg_instance_id){
-
-    my $dt=formatDateTimeString(); print("$dt Detach instance=$asg_instance_id from ASG=$asgname\n");
-    my $dt=formatDateTimeString(); print("$dt aws autoscaling detach-instances --instance-ids $asg_instance_id --auto-scaling-group-name $asgname --should-decrement-desired-capacity --region $region\n");
-    my $rc=`aws autoscaling detach-instances --instance-ids $asg_instance_id --auto-scaling-group-name $asgname --should-decrement-desired-capacity --region $region`;
-    if ( $rc !~ /Detaching EC2 instance/s ){
-      my $dt=formatDateTimeString(); die "$dt FATAL ERROR. While attempting to detach instance, \"$asg_instance\". Contact Tim Humphrey. EXITING. \n";
-    }
 
     # Stop Instance
     my $dt=formatDateTimeString(); print("$dt STOP instance=$asg_instance_id\n");
@@ -96,26 +83,6 @@ foreach my $asgname (@asgnames){
       my $dt=formatDateTimeString(); die "$dt FATAL ERROR. While attempting to stop instance, \"$asg_instance\". Contact Tim Humphrey. EXITING. \n";
     }
   }
-  }
-}
-
-if ( defined($instance_ids) ){
-   $_=`cat $instance_ids`;
-   s/^\s+//;
-   s/\s+$//;
-   my @i=split(/\n/,$_);
-   # Put master on end
-   my $tmp=shift @i;
-   push @i, $tmp;
-   foreach (@i){
-     push @additional_instances, $_;
-   }
-}
-
-my $dt=formatDateTimeString();print "$dt Number of instance ids in \@additional_instances is ",scalar(@additional_instances),"\n";
-foreach my $instance_id (@additional_instances){
-  my $dt=formatDateTimeString(); print("$dt aws ec2 stop-instances --instance-ids $instance_id --region $region\n");
-  my $rc=`aws ec2 stop-instances --instance-ids $instance_id --region $region`;
 }
 #===========================================================
 sub ArrayOfValuesForKey{

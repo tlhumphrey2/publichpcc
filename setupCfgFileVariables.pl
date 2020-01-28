@@ -3,7 +3,7 @@
 sudo ./setupCfgFileVariables.pl -clustercomponent Master -stackname $stackname -region $region -pem $pem -channels $channels -eip 52.210.2.55 &> setupCfgFileVariables.log
 =cut
 # THIS PROGRAM adds lines to cfg_BestHPCC.sh and creates these 3 files: instance_ids.txt, public_ips.txt, and private_ips.txt
-$ThisDir=($0=~/^(.*)\//)? $1 : ".";
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 print "DEBUG: Entering setupCfgFileVariables.pl. ThisDir=\"$ThisDir\"\n";
 
 require "$ThisDir/getConfigurationFile.pl";
@@ -146,8 +146,8 @@ foreach my $cfgvar (sort keys %ValueOfCfgVariable){
 	  $IsPlatformSixOrHigher=1;
 	}
       }
-      my $platformBefore5_2=($First2Digits>=6.0)? "hpccsystems-platform_community-<version>.<osversion>.x86_64.rpm":"hpccsystems-platform_community-with-plugins-<version>.el6.x86_64.rpm";# Has underscore between platform and community  
-      my $platformAfter5_2=($First2Digits>=6.0)? "hpccsystems-platform-community_<version>.<osversion>.x86_64.rpm":"hpccsystems-platform-community-with-plugins_<version>.el6.x86_64.rpm";# Has dash between platform and community   
+      my $platformBefore5_2=($First2Digits>=6.0)? "hpccsystems-platform_community-<version>.<osversion>.x86_64.rpm":"hpccsystems-platform_community-with-plugins-<version>.<osversion>.x86_64.rpm";# Has underscore between platform and community  
+      my $platformAfter5_2=($First2Digits>=6.0)? "hpccsystems-platform-community_<version>.<osversion>.x86_64.rpm":"hpccsystems-platform-community-with-plugins_<version>.<osversion>.x86_64.rpm";# Has dash between platform and community   
 print "DEBUG: First2Digits=\"$First2Digits\"\n";
       $platformpath =~ s/<base_version>/$base_version/;
       my $HPCCPlatform;
@@ -248,11 +248,9 @@ close(OUT);
 #==============================================================================
 sub getOSVersion{
   my $osversion='el6';
-  if ( -e "/etc/os-release" ){
-    local $_=`cat /etc/os-release`;
-    if ( /centos-7/si ){
-      $osversion='el7';
-    }
+  local $_=`cat /etc/*release*`;
+  if ( /NAME="Amazon Linux"\s+VERSION="2"/s ){
+    $osversion='el7';
   }
   return $osversion;
 }

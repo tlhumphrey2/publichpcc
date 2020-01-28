@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # loopUntilHPCCPlatformInstalledOnAllInstances.pl
-$ThisDir=($0=~/^(.*)\//)? $1 : ".";
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 $cdir=`pwd`;chomp $cdir;
 if ( ( $cdir eq '/home/ubuntu' ) || ( $cdir eq '/home/ec2-user' ) ){
 }
