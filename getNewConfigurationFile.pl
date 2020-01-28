@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #getNewConfigurationFile.pl
-$ThisDir=($0=~/^(.*)\//)? $1 : ".";
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 
 $cfgfile="$ThisDir/new_cfg_BestHPCC.sh";
 open(CFG,$cfgfile) || die "Can't open for input cfgfile=\"$cfgfile\"\n";

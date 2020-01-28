@@ -6,7 +6,7 @@ This script does:
 3. Attaches all instances to their asg.
 =cut
 
-$ThisDir=($0 =~ /^(.+)[\\\/]/)? $1 : "." ;
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 require "$ThisDir/ClusterInitVariables.pl";
 require "$ThisDir/formatDateTimeString.pl";
 
@@ -27,14 +27,14 @@ else{
 #----------------------------------
 my $dt=formatDateTimeString(); print("$dt START ALL Instances.\n");
 if ( ( $asgfile !~ /^\s*$/ ) && open(IN,"$ThisDir/$asgfile") ){
-while (<IN>){
+ while (<IN>){
    chomp;
    my ($asgname,$csv_instance_list)=split(/:/,$_);
    push @asgname, $_;
    my @asg_instance_id=split(/,/,$csv_instance_list);
    push @additional_instances, @asg_instance_id;
-}
-close(IN);
+ }
+ close(IN);
 }
 else{
    if ( defined($instance_ids) ){
@@ -75,8 +75,8 @@ foreach (@asgname){
 	 print "WAIT FOR ${instance_id}'s status to be 'running'\n";
          sleep(2);
      }
-     my $dt=formatDateTimeString(); print("$dt aws autoscaling attach-instances --instance-ids $instance_id --auto-scaling-group-name $asgname --region $region\n");
-     my $rc=`aws autoscaling attach-instances --instance-ids $instance_id --auto-scaling-group-name $asgname --region $region`;
+#    my $dt=formatDateTimeString(); print("$dt aws autoscaling attach-instances --instance-ids $instance_id --auto-scaling-group-name $asgname --region $region\n");
+#    my $rc=`aws autoscaling attach-instances --instance-ids $instance_id --auto-scaling-group-name $asgname --region $region`;
    }
 }
 

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-$ThisDir=($0=~/^(.*)\//)? $1 : ".";
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 $user=`basename $ThisDir`;chomp $user;
 print "In tlh_hpcc-push.pl user=\"$user\"\n";
 require "$ThisDir/getConfigurationFile.pl";

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $ThisDir/tlh_hpcc_push.pl
-$ThisDir=($0=~/^(.*)\//)? $1 : ".";
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 $user=`basename $ThisDir`;chomp $user;
 print "In tlh_hpcc-push.pl user=\"$user\"\n";
 

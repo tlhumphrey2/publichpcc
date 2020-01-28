@@ -1,5 +1,5 @@
-#!/usr/bin/perl
-$ThisDir=($0=~/^(.*)\//)? $1 : ".";
+!/usr/bin/perl
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 =pod
 USAGE EXAMPLE:
 getResourceIdsAndTagWithRequired.pl $stackname $region
@@ -21,7 +21,7 @@ WHAT THIS SCRIPT DOES:
       Volume,vol-c6353263
       Vpc,vpc-f27a9c95
 3. Then for each ResourceType,ResourceId/line, I create a line that looks like the following:
-$resource_id,$region,research,research,research,$stackname,$resource_type,dev,timothy.humphrey@lexisnexisrisk.com,timothy.humphrey@lexisnexisrisk.com
+$resource_id,$region,research,research,research,$stackname,$resource_type,dev,$email,$email
 4. Then I put these in a file called ResourceAndRequiredTags.csv, where the 1st line of the file is the following:
 resource_id,region,market,product,application,project,service,lifecycle,owner_email,support_email
 5. The last thing I do is call tag-resources.pl to add the required tags to all resources. This call looks like:
@@ -32,8 +32,9 @@ $ThisDir/tag-resources.pl $ThisDir/ResourceAndRequiredTags.csv
 #require "$ThisDir/common.pl";
 
 # Get commandline arguments
-my $stackname=shift @ARGV;
-my $region=shift @ARGV;
+my $stackname =shift @ARGV;
+my $region =shift @ARGV;
+my $email = (scalar(@ARGV) > 0)? shift @ARGV : 'timothy.humphrey@lexisnexisrisk.com' ;
 
 $instance_descriptions_file="$ThisDir/tagging-$stackname-instance-descriptions.json";
 # 1. Uses describe-instances, filtering on $stackname, get descriptions of all instances
@@ -68,7 +69,7 @@ foreach (@ResourceTypeResourceId){
   next if /^\s*$/;
   my ($resource_type,$resource_id)=split(/,/,$_);
   $resource_type=~s/Id$//;
-  push @ResourceAndRequiredTags, "$resource_id,$region,research,research,research,$stackname,$resource_type,dev,timothy.humphrey\@lexisnexisrisk.com,timothy.humphrey\@lexisnexisrisk.com";
+  push @ResourceAndRequiredTags, "$resource_id,$region,research,research,research,$stackname,$resource_type,dev,$email,@email";
 }
 
 # 4. Then I put these in a file called ResourceAndRequiredTags.csv, where the 1st line of the file is the following:

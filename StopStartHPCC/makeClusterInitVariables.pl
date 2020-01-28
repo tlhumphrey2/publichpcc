@@ -1,8 +1,8 @@
 #!/usr/bin/perl
-$ThisDir=($0 =~ /^(.+)[\\\/]/)? $1 : "." ;
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 =pod
 USAGE EXAMPLE:
-makeClusterInitVariables.pl ec2-user us-east-2 test-remove-roxie-completely
+makeClusterInitVariables.pl $sshuser $region $stackname
 =cut
 
 # Below are commandline arguments in order they appear on line

@@ -8,7 +8,7 @@ In the program, used by this one, ClusterInitVariables.pl, $master_name is set t
 And, $other_name is set to the "name" tags given to all other instances, e.g. "HPCC-System-20170720", shown
 above.
 =cut
-$ThisDir=($0 =~ /^(.+)[\\\/]/)? $1 : "." ;
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 require "$ThisDir/ClusterInitVariables.pl";
 
 my ($id,$ip)=getPrivateIPsAndInstanceIDs();

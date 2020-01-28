@@ -1,11 +1,12 @@
 #!/usr/bin/perl
 
-$ThisDir=($0 =~ /^(.+)[\\\/]/)? $1 : "." ;
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 require "$ThisDir/ClusterInitVariables.pl";
 
 $action="stop";
 # Get all private_ips
-open(IN,"$ThisDir/$private_ips") || die "Can't open for input: \"$ThisDir/$private_ips\"\n";
+$private_ips_path = ($private_ips =~ /\//)? $private_ips : "$ThisDir/$private_ips";
+open(IN,$private_ips_path) || die "Can't open for input: \"$private_ips_path\"\n";
 while(<IN>){
    next if /^\s*$/;
    chomp;

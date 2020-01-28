@@ -1,3 +1,5 @@
 #!/usr/bin/perl
 $f=shift @ARGV;
-system("aws s3 cp $f s3://publichpcc/$f");
+$subdir = (scalar(@ARGV)>0)? shift @ARGV : '' ;
+$S3BucketPath = ($subdir eq '')? "s3://publichpcc/$f" : "s3://publichpcc/$subdir/$f";
+system("aws s3 cp $f $S3BucketPath");
