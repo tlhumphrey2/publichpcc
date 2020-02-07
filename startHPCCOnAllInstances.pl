@@ -9,10 +9,13 @@ $master_exists=`aws s3 ls s3://$stackname/master-created`;
 
 # If this instance is Master OR Master already exists and no instance is down (meaning this instance is newly added non-master instance)
 if (($ThisClusterComponent eq 'Master')){
-  # Start the hpcc system
-  print("In $0. /opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init start\n");
-  $_=`/opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init start 2>&1`;
-  print "In $0. rc=\"$_\"\n";
+  my $restart = (scalar(@ARGV) > 0)? shift @ARGV : '';
+  if ( $restart ne 'restart' ){
+    # Start the hpcc system
+    print("In $0. /opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init start\n");
+    $_=`/opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init start 2>&1`;
+    print "In $0. rc=\"$_\"\n";
+  }
 
   # I was doing the following only when thor timed out when I attempted to start it.
   #  But, because roxie doesn't indicate that it doesn't comeup correctly and a restart

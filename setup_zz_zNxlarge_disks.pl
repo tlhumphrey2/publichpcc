@@ -21,7 +21,8 @@ $sixteenTB=16384;
 #  to this instance, which is just coming up.
 if ( ($DownedInstanceId !~ /^\s*$/) || (( scalar(@argv) > 0 ) && (( $argv[0] =~ /^\d+$/ ) || ( $argv[0] =~ /^vol\-/ ))) ){
   local $ClusterComponent =($DownedInstanceId!~/^\s*$/)? $DownedNodeType : $argv[1];
-  $ebsInfo = ($DownedInstanceId!~/^\s*$/)? getEBSVolumeID($stackname, $ClusterComponent) : $argv[0];
+  $AddingSlavesOrRoxies = getAddingSlavesOrRoxies($stackname,$region);
+  $ebsInfo = (($DownedInstanceId!~/^\s*$/) && ($AddingSlavesOrRoxies eq 'false'))? getEBSVolumeID($stackname, $ClusterComponent) : $argv[0];
   shift @argv;
   shift @argv;
   local $ThisInstanceId=`curl http://169.254.169.254/latest/meta-data/instance-id`;
