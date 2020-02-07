@@ -535,8 +535,29 @@ my ($stackname, $MasterEIP)=@_;
 return $message;
 }
 #==========================================================================================================
+sub putAddingSlavesOrRoxies{
+my ($stackname, $region, $value)=@_;
+$stackname = lc($stackname);
+print "Entering putAddingSlavesOrRoxies. stackname=\"$stackname\", region=\"$region\", value=\"$value\".\n";
+my $rc = `echo $value > $ThisDir/AddingSlavesOrRoxies`;
+$rc = `aws s3 cp $ThisDir/AddingSlavesOrRoxies s3://$stackname/AddingSlavesOrRoxies`;
+return $rc;
+}
+#==========================================================================================================
+# USAGE EXAMPLE: $AddingSlavesOrRoxies = getAddingSlavesOrRoxies($stackname,$region);
+sub getAddingSlavesOrRoxies{
+my ($stackname, $region)=@_;
+$stackname = lc($stackname);
+print "Entering getAddingSlavesOrRoxies. stackname=\"$stackname\", region=\"$region\".\n";
+$AddingSlavesOrRoxies = `aws s3 cp s3://$stackname/AddingSlavesOrRoxies -`; chomp $AddingSlavesOrRoxies;
+$AddingSlavesOrRoxies = 'false' if $AddingSlavesOrRoxies =~ /\bNot Found\b/i;
+print "Leaving getAddingSlavesOrRoxies. AddingSlavesOrRoxies=\"AddingSlavesOrRoxiesip\".\n";
+return $AddingSlavesOrRoxies;
+}
+#==========================================================================================================
 sub getMasterEIP{
 my ($stackname, $region, $EIPAllocationId)=@_;
+$stackname = lc($stackname);
 print "Entering getMasterEIP. region=\"$region\", EIPAllocationId=\"$EIPAllocationId\".\n";
 if ( $EIPAllocationId =~ /^\s*$/ ){
   $EIPAllocationId = `aws s3 cp s3://$stackname/EIPAllocationId -`; chomp $EIPAllocationId;

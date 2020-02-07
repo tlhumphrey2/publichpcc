@@ -5,9 +5,11 @@ $ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisD
 # Also the order is the same as the order of elements in @DesiredInfo
 sub getClusterInstanceInfo{
 my ($region, $stackname, @DesiredInfo)=@_;
+#print "DEBUG: Entering getClusterInstanceInfo. region=\"$region\", stackname=\"$stackname\". Size of \@DesiredInfo is ",scalar(@DesiredInfo),".\n";
   my %qElement = ();
   $qElement{'InstanceId'} = 'InstanceId';
   $qElement{'State'} = 'State.Name';
+  $qElement{'StateReason'} = 'StateReason.Message';
   $qElement{'LaunchTime'} = 'LaunchTime';
   $qElement{'StateChangeReason'} = 'StateTransitionReason';
   $qElement{'VolumeIds'} = 'BlockDeviceMappings[*].[Ebs.VolumeId, DeviceName]';
@@ -23,14 +25,38 @@ my ($region, $stackname, @DesiredInfo)=@_;
   $qElement{'roxienodes'} = "[Tags[?Key=='roxienodes'].Value][0][0]";
   $qElement{'HPCCPlatform'} = "[Tags[?Key=='HPCCPlatform'].Value][0][0]";
 
-  my $filter = ($stackname !~ /^\s*$/)? "--filter \"Name=tag:StackName,Values=$stackname\"" : '';
-
   my @qElement = ();
-  foreach (@DesiredInfo){
-    push @qElement, $qElement{$_};
+  push @qElement, $qElement{'InstanceId'};
+  push @qElement, $qElement{'State'};
+  push @qElement, $qElement{'LaunchTime'};
+  push @qElement, $qElement{'StateChangeReason'};
+  push @qElement, $qElement{'VolumeIds'};
+  push @qElement, $qElement{'PublicIp'};
+  push @qElement, $qElement{'PublicIpAddress'};
+  push @qElement, $qElement{'PrivateIp'};
+  push @qElement, $qElement{'PrivateIpAddress'};
+  push @qElement, $qElement{'InstanceType'};
+  push @qElement, $qElement{'InstanceName'};
+  push @qElement, $qElement{'Name'};
+  push @qElement, $qElement{'pem'};
+  push @qElement, $qElement{'slavesPerNode'};
+  push @qElement, $qElement{'roxienodes'};
+  push @qElement, $qElement{'HPCCPlatform'};
+
+  my $filters = ($stackname !~ /^\s*$/)? "--filters Name=tag:StackName,Values=$stackname" : '';
+
+  # If @DesiredInfo is empty then get all the information about cluster instances
+  if ( scalar(@DesiredInfo) > 0 ){
+    @qElement = ();
+    foreach (@DesiredInfo){
+      push @qElement, $qElement{$_};
+    }
   }
+  #print "DEBUG: Size of \@qElement is ",scalar(@qElement),".\n";
+
   my $qElements = join(", ",@qElement);
-  $_ = `aws ec2 describe-instances --region $region $filter --query "Reservations[*].Instances[*].[$qElements]" --output text`;
+  $_ = `aws ec2 describe-instances --region $region $filters --query "Reservations[*].Instances[*].[$qElements]" --output text`;
+  s/[\/]dev[\/]//sg;
   my @InstanceInfo = split(/\n/,$_);
   my @OutInfo=();
   foreach (@InstanceInfo){

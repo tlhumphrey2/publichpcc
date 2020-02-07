@@ -221,8 +221,9 @@ for( my $i=0; $i < scalar(@sorted_InstanceInfo); $i++){
   }
 }
 
+$AddingSlavesOrRoxies = getAddingSlavesOrRoxies($stackname,$region);
 # If there is a downed instance then save its info in /home/$user/cfg_BestHPCC.sh.
-if ( $DownedInstanceId!~/^\s*$/ ){
+if ( ($DownedInstanceId!~/^\s*$/) && ($AddingSlavesOrRoxies eq 'false') ){
       print "DEBUG: DownedInstanceId=$DownedInstanceId\n";
       print OUT "DownedInstanceId=$DownedInstanceId\n";
       print "DEBUG: DownedNodeType=$DownedNodeType\n";
