@@ -1,0 +1,15 @@
+DEBUG: In getUnusedEIP. @eip=(eipalloc-053106b4cd66aef0d, eipalloc-031ddddd1c039ff3c, eipalloc-48933a31, eipalloc-07bd339f9cf9c733c, eipalloc-0526bcd599308f00e, eipalloc-00babdf4ee8a72e30, eipalloc-11d6c72b, eipalloc-0bd620c9fa5aeea19, eipalloc-268d5e40, eipalloc-77745f11, eipalloc-0671cd68207e709d0)
+DEBUG: In getUnusedEIP.pl. aws ec2 describe-addresses --allocation-ids eipalloc-053106b4cd66aef0d|/home/thumphrey/share/publichpcc/json2yaml.sh
+DEBUG: In getUnusedEIP.pl. aws ec2 describe-addresses --allocation-ids eipalloc-031ddddd1c039ff3c|/home/thumphrey/share/publichpcc/json2yaml.sh
+DEBUG: In getUnusedEIP.pl. aws ec2 describe-addresses --allocation-ids eipalloc-48933a31|/home/thumphrey/share/publichpcc/json2yaml.sh
+DEBUG: In getUnusedEIP.pl. aws ec2 describe-addresses --allocation-ids eipalloc-07bd339f9cf9c733c|/home/thumphrey/share/publichpcc/json2yaml.sh
+DEBUG: In getUnusedEIP.pl. aws ec2 describe-addresses --allocation-ids eipalloc-0526bcd599308f00e|/home/thumphrey/share/publichpcc/json2yaml.sh
+DEBUG: In getUnusedEIP.pl. aws ec2 describe-addresses --allocation-ids eipalloc-00babdf4ee8a72e30|/home/thumphrey/share/publichpcc/json2yaml.sh
+DEBUG: In getUnusedEIP.pl. aws ec2 describe-addresses --allocation-ids eipalloc-11d6c72b|/home/thumphrey/share/publichpcc/json2yaml.sh
+DEBUG: In getUnusedEIP.pl. aws ec2 describe-addresses --allocation-ids eipalloc-0bd620c9fa5aeea19|/home/thumphrey/share/publichpcc/json2yaml.sh
+DEBUG: In makeEIP. Found unused. EIPAllocationId="eipalloc-0bd620c9fa5aeea19". Description is "Addresses:
+- {AllocationId: eipalloc-0bd620c9fa5aeea19, Domain: vpc, NetworkBorderGroup: us-east-1,
+  PublicIp: 52.206.178.201, PublicIpv4Pool: amazon}
+
+"
+DEBUG: In makeEIP. Found unused. EIP="52.206.178.201", EIPAllocationId="eipalloc-0bd620c9fa5aeea19".

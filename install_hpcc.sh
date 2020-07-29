@@ -32,9 +32,6 @@ echo "symbolic links to blas libraries"
 ln -s /usr/lib64/libblas.so /usr/lib/libblas.so
 ln -s /usr/lib64/atlas/libcblas.so /usr/lib/libcblas.so
 
-# Install s3cmd
-$ThisDir/install_s3cmd.sh
-
 #install hpcc
 echo "install hpcc"
 mkdir hpcc
@@ -46,6 +43,12 @@ if [ "$IsPlatformSixOrHigher" -eq "1" ];then
  if [ "$IsPlatformSix" == "" ];then
    echo "$ThisDir/install-devtools2-and-libstdc.sh"
    $ThisDir/install-devtools2-and-libstdc.sh
+ fi
+ if [[ "`uname -or`" == *"amzn2"* ]];then 
+   echo yum install -y https://repo.ius.io/ius-release-el7.rpm
+   yum install -y https://repo.ius.io/ius-release-el7.rpm
+   echo yum install -y python36u python36u-pip
+   yum install -y python36u python36u-pip
  fi
  echo "yum install $HPCCPlatform -y"
  yum install $HPCCPlatform -y

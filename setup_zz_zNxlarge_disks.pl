@@ -34,7 +34,7 @@ if ( ($DownedInstanceId !~ /^\s*$/) || (( scalar(@argv) > 0 ) && (( $argv[0] =~ 
   if ( $ebsInfo =~ /^\d+$/ ){
     # if volume size <= 16TB, which is maximum allowable size of single EBS volume.
     if ( $ebsInfo <= $sixteenTB ){
-      my $v=makeEBSVolume($ebsInfo, $az, $region);
+      my $v=makeEBSVolume($ebsInfo, $az, $region, $stackname, $ClusterComponent);
       push @Volume2Attach, $v;
       push @xvdlines, "xvd$nextdriveletter";
     }
@@ -77,31 +77,17 @@ if ( ($DownedInstanceId !~ /^\s*$/) || (( scalar(@argv) > 0 ) && (( $argv[0] =~ 
     my $dev = $xvdlines[$i];
 
     #-------------------------------------------------------------------------------------------------------------------------
-    # Loop until volume is attached (if instance isn't ready volume won't be attached).
-    my $c=0;
-    ATTACHVOLUME:
-    $c++;
-     print("$c. aws ec2 attach-volume --volume-id $v --instance-id $ThisInstanceId --device $dev --region $region &> /home/ec2-user/attach-volume.log\n");
-     system("aws ec2 attach-volume --volume-id $v --instance-id $ThisInstanceId --device $dev --region $region &> /home/ec2-user/attach-volume.log");
-
-     $_=`aws ec2 describe-volumes --volume-ids $v --region $region|$ThisDir/json2yaml.sh`;
-     if ( ! /\{AttachTime: '\d{4}-\d{2}-\d{2}T/s ){
-       sleep(5);
-       goto "ATTACHVOLUME";
-     }
-=pod
-     my $attach_vol=`cat /home/ec2-user/attach-volume.log`;
-     $attach_vol =~ s/\n+//g;
-     print "DEBUG: attach_vol=\"$attach_vol\"\n";
-     sleep(5);
-    goto "ATTACHVOLUME" if $attach_vol =~ /IncorrectState/s;
-=cut
+    # Attach volume.
+    attachEBSVolume($v, $ThisInstanceId, $dev,$region);
     #-------------------------------------------------------------------------------------------------------------------------
 
     # modify DeleteOnTermination to be true
-    print "Change DeleteOnTermination to false\n";
-    print("bash /home/ec2-user/DeleteOnTermination2False.sh $ThisInstanceId $dev $region\n");
-    system("bash /home/ec2-user/DeleteOnTermination2False.sh $ThisInstanceId $dev $region");
+    print "Change DeleteOnTermination to true\n";
+    print("bash /home/ec2-user/DeleteOnTermination2True.sh $ThisInstanceId $dev $region\n");
+    system("bash /home/ec2-user/DeleteOnTermination2True.sh $ThisInstanceId $dev $region");
+    #print "Change DeleteOnTermination to false\n";
+    #print("bash /home/ec2-user/DeleteOnTermination2False.sh $ThisInstanceId $dev $region\n");
+    #system("bash /home/ec2-user/DeleteOnTermination2False.sh $ThisInstanceId $dev $region");
   }
   print "DEBUG: Leaving EBS processing code.\n";
 }
@@ -170,6 +156,14 @@ if ( scalar(@xvdlines) >= 1 ){
    system(" mkdir -p /var/lib/HPCCSystems &&  mount $mountdevice /var/lib/HPCCSystems");
 #   print("mkdir -p /mnt/var/lib/HPCCSystems && ln -s  /mnt/var/lib/HPCCSystems  /var/lib/HPCCSystems\n");
 #   system("mkdir -p /mnt/var/lib/HPCCSystems && ln -s  /mnt/var/lib/HPCCSystems  /var/lib/HPCCSystems");
+   #----------------------------------------------------------------
+   # if $stackname has 'mhpcc-' in its name (which means HMS is creating this cluster) then
+   #  put mount in fstab, so mount will be done when instance is booted or restarted
+   if ( $stackname =~ /mhpcc-/ ){
+      print "echo \"$mountdevice /var/lib/HPCCSystems ext4 noatime 0 0\" | tee -a /etc/fstab\n";
+      $rc = `echo "$mountdevice /var/lib/HPCCSystems ext4 noatime 0 0" | tee -a /etc/fstab 2>&1`;
+      print "rc of fstab append is \"$rc\"\n";
+   }
 }
 #----------------------------------------------------------------
 # SUBROUTINES
@@ -212,32 +206,6 @@ my ($region,$ThisInstanceId)=@_;
   # Get instance id from metadata
   my $az=`curl http://169.254.169.254/latest/meta-data/placement/availability-zone`;chomp $az;
   return $az;
-}
-#----------------------------------------------------------------
-sub makeEBSVolume{
-my ($ebssize, $az, $region)=@_;
-   print "aws ec2 create-volume --size $ebssize --region $region --availability-zone $az --volume-type gp2  --tag-specifications 'ResourceType=volume,Tags=[{Key=Name,Value=$stackname--$ClusterComponent}]'\n";
-   my $makeebs=`aws ec2 create-volume --size $ebssize --region $region --availability-zone $az --volume-type gp2  --tag-specifications 'ResourceType=volume,Tags=[{Key=Name,Value=$stackname--$ClusterComponent}]'`;
-   print "DEBUG: makeebs=\"$makeebs\"\n";
-   my $volumeid = ($makeebs=~/"VolumeId"\s*: "(vol-[^"]+)"/)? $1 : '';
-
-   # Wait until volume is available
-   print "In makeEBSVolme. aws ec2 describe-volumes --region $region --volume-ids $volumeid\n";
-   local $_=`aws ec2 describe-volumes --region $region --volume-ids $volumeid 2>&1`;
-   my $volume_available=(/"State"\s*:\s*"available"/s)? 1 : 0 ;
-   my $c=0;
-   while ( ! $volume_available && ( $c <= 20 ) ){
-      $c++;
-      print "In makeEBSVolume. $c. volume is not available, yet. WAITING.\n";
-      sleep 5;
-      print "In makeEBSVolme. aws ec2 describe-volumes --region $region --volume-ids $volumeid\n";
-      local $_=`aws ec2 describe-volumes --region $region --volume-ids $volumeid 2>&1`;
-      $volume_available=(/"State"\s*:\s*"available"/s)? 1 : 0 ;
-   }
-
-   print "In makeEBSVolume. Volume, $volumeid, is now available.\n";
-
-return $volumeid;
 }
 #----------------------------------------------------------------
 # call $volid=getEBSVolumeID($stackname, $ClusterComponent);

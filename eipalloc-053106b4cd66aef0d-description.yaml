@@ -1,0 +1,26 @@
+Addresses:
+- AllocationId: eipalloc-053106b4cd66aef0d
+  AssociationId: eipassoc-0dce197df0736340b
+  Domain: vpc
+  NetworkBorderGroup: us-east-1
+  NetworkInterfaceId: eni-08d8aa25ef99744f7
+  NetworkInterfaceOwnerId: '633162230041'
+  PrivateIpAddress: 192.168.14.230
+  PublicIp: 18.209.39.62
+  PublicIpv4Pool: amazon
+  Tags:
+  - {Key: 'aws:cloudformation:stack-name', Value: eksctl-hpcc3-cluster}
+  - {Key: support_email, Value: xiaoming.wang@lexisnexis.com}
+  - {Key: Name, Value: test-amazon-linux2-with-gpu-drivers6}
+  - {Key: market, Value: hpccsystems}
+  - {Key: owner_email, Value: xiaoming.wang@lexisnexis.com}
+  - {Key: alpha.eksctl.io/cluster-name, Value: hpcc3}
+  - {Key: application, Value: hpccsystems}
+  - {Key: 'aws:cloudformation:stack-id', Value: 'arn:aws:cloudformation:us-east-1:633162230041:stack/eksctl-hpcc3-cluster/21c2bf40-7e61-11ea-99e4-0acf59e535ed'}
+  - {Key: product, Value: hpccsystems}
+  - {Key: lifecycle, Value: dev}
+  - {Key: service, Value: ecs}
+  - {Key: project, Value: hpcc builds}
+  - {Key: 'aws:cloudformation:logical-id', Value: NATIP}
+  - {Key: eksctl.cluster.k8s.io/v1alpha1/cluster-name, Value: hpcc3}
+

@@ -7,6 +7,7 @@ This script does:
 =cut
 
 $ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
+print "DEBUG: Entering startAllInstances.pl. ThisDir=\"$ThisDir\"\n";
 require "$ThisDir/ClusterInitVariables.pl";
 require "$ThisDir/formatDateTimeString.pl";
 
@@ -48,6 +49,7 @@ else{
    }
 }
 
+if ( scalar(@additional_instances) > 0 ){
 # Start instances
 foreach my $instance_id (@additional_instances){
    if ( InstanceStatus($instance_id) eq 'running' ){
@@ -80,17 +82,6 @@ foreach (@asgname){
    }
 }
 
-foreach my $instance_id (@additional_instances){
-  my $dt=formatDateTimeString(); print("$dt aws ec2 start-instances --instance-ids $instance_id --region $region\n");
-  my $rc=`aws ec2 start-instances --instance-ids $instance_id --region $region`;
-
-  if ( $rc !~ /StartingInstances/s ){
-    my $dt=formatDateTimeString(); die "$dt FATAL ERROR. While attempting to start instance, \"$asg_instance\". Contact Tim Humphrey. EXITING. \n";
-  }
-
-  sleep(10); # sleep 5 seconds with the hope that more time between starts will eliminate errors.
-}
-
 my $dt=formatDateTimeString(); print("$dt $ThisDir/setupDisks.pl\n");
 my $rc=`$ThisDir/setupDisks.pl`;
 print("$dt $rc\n");
@@ -107,6 +98,10 @@ if ( ! defined($no_hpcc) ){
 
 print("$ThisDir/resumeASGProcesses.pl\n");
 system("$ThisDir/resumeASGProcesses.pl");
+}
+else{
+  print("NO INSTANCES WERE STARTED.\n");
+}
 #========================================================================================
 sub waitUntilAlive{
 my ( $ip )=@_;

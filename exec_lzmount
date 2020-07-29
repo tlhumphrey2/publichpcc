@@ -1,0 +1,12 @@
+#!/bin/bash
+lzmount_cmd=$1
+s3bucket=$2
+access_and_secret_keys=$3
+echo $access_and_secret_keys > /home/hpcc/.passwd-s3fs
+chmod 600 /home/hpcc/.passwd-s3fs
+/usr/local/bin/lzmount $lzmount_cmd $s3bucket
+if [ "$?" == "1" ];then
+  echo "Error status returned"
+  rmdir /var/lib/HPCCSystems/mydropzone/$s3bucket
+fi
+rm -v /home/hpcc/.passwd-s3fs

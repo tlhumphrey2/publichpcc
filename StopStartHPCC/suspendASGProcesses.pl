@@ -4,8 +4,13 @@ require "$ThisDir/ClusterInitVariables.pl";
 require "/home/$sshuser/common.pl";
 
 # Note: If ASG is given then it must be either RoxieASG or SlaveASG
-$ASG = (scalar(@ARGV) > 0)? shift @ARGV : '';
-print "DEBUG: Entering suspendASGProcesses.pl name=\"$name\", master_name=\"$master_name\", other_name=\"$other_name\", region=\"$region\", ASG=\"$ASG\".\n";
+
+@process = ();
+while(scalar(@ARGV) > 0){
+  push @process, shift @ARGV;
+}
+
+$processes2suspend = (scalar(@process) > 0)? join(" ",@process) :'Launch Terminate HealthCheck' ;
 
 if ( ! defined($stackname) || ($stackname=~/^\s*$/) ){
   if (defined($master_name) && ($master_name!~/^\s*$/) ){
@@ -21,18 +26,9 @@ if ( ! defined($stackname) || ($stackname=~/^\s*$/) ){
 # For each autoscaling group whose name is in $asgnames, suspend these processes: Launch Terminate HealthCheck
 foreach my $asgname (@asgnames){
   next if $asgname=~/^\s*$/;
-  if ( $ASG ne '' ){
-    if ( $asgname =~ /$stackname\-$ASG/ ){
-      print "aws autoscaling suspend-processes --auto-scaling-group-name $asgname --scaling-processes Launch Terminate HealthCheck --region $region\n";
-      my $rc=`aws autoscaling suspend-processes --auto-scaling-group-name $asgname --scaling-processes Launch Terminate HealthCheck --region $region`;
-      print "$rc\n";
-    }
-  }
-  else{
-    print "aws autoscaling suspend-processes --auto-scaling-group-name $asgname --scaling-processes Launch Terminate HealthCheck --region $region\n";
-    my $rc=`aws autoscaling suspend-processes --auto-scaling-group-name $asgname --scaling-processes Launch Terminate HealthCheck --region $region`;
+    print "aws autoscaling suspend-processes --auto-scaling-group-name $asgname --scaling-processes $processes2suspend --region $region\n";
+    my $rc=`aws autoscaling suspend-processes --auto-scaling-group-name $asgname --scaling-processes $processes2suspend --region $region`;
     print "$rc\n";
-  }
 }
 #================================================
 sub appendStatement2ClusterInitVariables{

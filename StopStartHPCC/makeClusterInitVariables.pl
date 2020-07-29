@@ -29,11 +29,10 @@ $template_ClusterInitVariables=<<EOFF1;
 \$mountpoint=(\$no_hpcc)? "/home/$sshuser/data" : "/var/lib/HPCCSystems"; # IF HPCC
 require "$home/cf_common.pl";
 require "$home/common.pl";
-if ( \$0 !~ /start/ ){
-  my \@sorted_InstanceInfo=InstanceVariablesFromInstanceDescriptions("$region","$stackname");
+
+my \@sorted_InstanceInfo=InstanceVariablesFromInstanceDescriptions("$region","$stackname");
 \@Filenames = (\$instance_ids, \$private_ips, \$public_ips, \$nodetypes);
-  my \@tmp = putHPCCInstanceInfoInFiles(\\\@sorted_InstanceInfo,\@Filenames);
-}
+my \@tmp = putHPCCInstanceInfoInFiles(\\\@sorted_InstanceInfo,\@Filenames);
 1;
 EOFF1
 

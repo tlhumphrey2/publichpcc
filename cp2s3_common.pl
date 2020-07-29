@@ -1,20 +1,18 @@
 #!/usr/bin/perl
 $ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 
-$thisDir = ( $0 =~ /^(.+)\// )? $1 : '.';
-
-require "$thisDir/getConfigurationFile.pl";
+require "$ThisDir/getConfigurationFile.pl";
 
 $ENV{'AWS_ACCESS_KEY_ID'}=$S3_ACCESS_KEY;
 $ENV{'AWS_SECRET_ACCESS_KEY'}=$S3_SECRET_KEY;
 $ENV{'AWS_DEFAULT_REGION'}=$region;
 
 #Log and Alert files
-$cpfs3_logname = "$thisDir/${stackname}_cpFilesFromS3.log";
-$cpfs3_DoneAlertFile = "$thisDir/done_cpFilesFromS3";
-$cp2s3_logname = "$thisDir/${stackname}_cpFiles2S3.log";
-$cp2s3_DoneAlertFile = "$thisDir/done_cpFiles2S3";
-$AlertDoneRestoringLogicalFiles = "$thisDir/done_restoring_logical_files";
+$cpfs3_logname = "$ThisDir/${stackname}_cpFilesFromS3.log";
+$cpfs3_DoneAlertFile = "$ThisDir/done_cpFilesFromS3";
+$cp2s3_logname = "$ThisDir/${stackname}_cpFiles2S3.log";
+$cp2s3_DoneAlertFile = "$ThisDir/done_cpFiles2S3";
+$AlertDoneRestoringLogicalFiles = "$ThisDir/done_restoring_logical_files";
 
 #HPCC System folders
 $FilePartsFolder='/var/lib/HPCCSystems/hpcc-data';
@@ -22,7 +20,7 @@ $DropzoneFolder='/var/lib/HPCCSystems/mydropzone';
 $SlaveNodesFile='/var/lib/HPCCSystems/mythor/slaves';     # This file must be on master
 
 #Metadata folder
-$MetadataFolder="$thisDir/metadata";
+$MetadataFolder="$ThisDir/metadata";
 
 # HPCCSystems paths of interest and utilities.
 $hsbin='/opt/HPCCSystems/sbin';
@@ -33,24 +31,28 @@ if ( $system_username !~ /^\s*$/ ){
    $dfuplus = "$dfuplus username=$system_username password=$system_password";
 }
 $daliadmin="/opt/HPCCSystems/bin/daliadmin";
-
-print "In cp2s3_common.pl Completed initializing all global variables.\n";
-
 #===================== Subroutines/Functions =======================================
-#-----------------------------------------------------------------------------------
 sub openLog{
 my ( $logname )=@_;
 
-   open my $log_fh, '>>', $logname;
+   #open my $log_fh, '>>', $logname;
+   open my $log_fh, '>', $logname;
    *STDOUT = $log_fh;
    *STDERR = $log_fh;
    $handler{$logname}=$log_fh;
 }
 #-----------------------------------------------------------------------------------
+sub closeLog{
+my ( $logname )=@_;
+  $log_fh = $handler{$logname};
+  close($log_fh);
+}
+#-----------------------------------------------------------------------------------
 sub printLog{
 my ( $logname, $text2print )=@_;
   $log_fh = $handler{$logname};
-  print STDOUT $text2print;
+  #print STDOUT $text2print;
+  print $log_fh $text2print;
 }
 #-----------------------------------------------------------------------------------
 sub cp2S3{
@@ -77,6 +79,14 @@ else{
 #-----------------------------------------------------------------------------------
 sub unset_aws_env_variables{
   system("unset AWS_ACCESS_KEY_ID;unset AWS_SECRET_ACCESS_KEY;unset AWS_DEFAULT_REGION");
+}
+#-----------------------------------------------------------------------------------
+sub master_ip{
+  my $master_pip;
+  my @all=split("\n",`cat $private_ips`);
+  my $master_pip = shift @all;
+
+return $master_pip;
 }
 #-----------------------------------------------------------------------------------
 sub thor_nodes_ips{
@@ -155,6 +165,25 @@ my ( $master_pip )=@_;
   shift @file;
   if ( scalar(@file)==0 ){
      printLog($cp2s3_logname,"In isFilesOnThor. There are no files on this thor.\n");
+  }
+  @file=grep($_=rmPrefixDotDoubleColon($_),@file);
+return @file;
+}
+#-----------------------------------------------------------------------------------
+sub FilesOnCluster{
+my ( $master_pip, $cluster )=@_;
+  sub rmPrefixDotDoubleColon{
+  my ( $n )=@_;
+  local $_=$n;
+   s/^\.:://;
+   return $_;
+  }
+  # Get list of files on cluster
+  printLog($cp2s3_logname,"In isFilesOnCluster. Get cluster file names with: $dfuplus server=$master_pip action=list name=*\n");
+  my @file=split(/\n/,`$dfuplus server=$master_pip action=list name=*`);
+  shift @file;
+  if ( scalar(@file)==0 ){
+     printLog($cp2s3_logname,"In isFilesOnCluster. There are no files on this cluster.\n");
   }
   @file=grep($_=rmPrefixDotDoubleColon($_),@file);
 return @file;

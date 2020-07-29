@@ -103,22 +103,24 @@
 "Default" : "t2.micro"
 },
 
-"BastionDefaultKeyPair" : {
-"Description" : "Bastion Default Key Pair",
-"Type" : "AWS::EC2::KeyPair::KeyName",
-"Default" : "tlh_keys_us_east_2"
-},
-
 "ClusterInstanceType" : {
 "Description" : "HPCC Thor Master EC2 instance type",
 "Default" : "r4.large",
 "Type" : "String"
 },
-
+"HMSCIDR" : {
+"AllowedPattern" : "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+"ConstraintDescription" : "Used for ssh, i.e. port 22.",
+ "Default" : "52.1.32.158/32",
+"Description" : "(DEFAULT ANY IP) CIDR block used for ssh and port 8010. Must be a valid CIDR range of the form x.x.x.x/x.",
+"MaxLength" : "18",
+"MinLength" : "9",
+"Type" : "String"
+},
 "AdminCIDR" : {
 "AllowedPattern" : "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
-"ConstraintDescription" : "Used for ssh and port 8010.",
-"Default" : "0.0.0.0/0",
+"ConstraintDescription" : "Used for ssh, i.e. port 22.",
+ "Default" : "0.0.0.0/0",
 "Description" : "(DEFAULT ANY IP) CIDR block used for ssh and port 8010. Must be a valid CIDR range of the form x.x.x.x/x.",
 "MaxLength" : "18",
 "MinLength" : "9",
@@ -132,6 +134,7 @@
 "us-east-2" : { "64" : "ami-02ccb28830b645a41" },
 "us-west-2" : { "64" : "ami-04590e7389a6e577c" },
 "us-west-1" : { "64" : "ami-03caa3f860895f82e" },
+"ca-central-1" : { "64" : "ami-054362537f5132ce2" },
 "eu-west-1" : { "64" : "ami-0713f98de93617bb4" },
 "eu-central-1" : { "64" : "ami-07cda0db070313c52" },
 "ap-southeast-1" : { "64" : "ami-05c64f7b4062b0a21" },
@@ -215,7 +218,7 @@
 
 "PublicInternetRoute" : {
 "Type" : "AWS::EC2::Route",
-"DependsOn" : [ "InternetGateway", "PublicInternetRouteTable" ] ,
+"DependsOn" : [ "InternetGateway", "PublicInternetRouteTable", "VPCGatewayAttachment" ] ,
 "Properties" : {
 "DestinationCidrBlock" : "0.0.0.0/0",
 "GatewayId" : { "Ref" : "InternetGateway" },
@@ -242,6 +245,7 @@
 "Type" : "AWS::EC2::Subnet",
 "Properties" :  {
 "CidrBlock": "10.0.0.0/24", 
+"AvailabilityZone" : {"Fn::Join" : ["",[{"Ref" : "AWS::Region"},"b"]]},
 "VpcId": { "Ref" : "HPCCVpc" }, 
 "Tags": [{ "Value": "HPCC-Public-subnet","Key": "Name"}] 
 }
@@ -317,7 +321,7 @@
 {
 "ToPort": 8002, 
 "IpProtocol": "tcp", 
-"CidrIp": { "Ref" : "AdminCIDR" },
+"CidrIp": "0.0.0.0/0",
 "FromPort": 8002
 }, 
 {
@@ -335,19 +339,13 @@
 {
 "ToPort": 8010, 
 "IpProtocol": "tcp", 
-"CidrIp": { "Ref" : "AdminCIDR" },
+"CidrIp": "0.0.0.0/0",
 "FromPort": 8010
 }, 
 {
 "ToPort": 8010, 
 "IpProtocol": "tcp", 
 "CidrIp": "10.0.0.0/16",
-"FromPort": 8010
-}, 
-{
-"ToPort": 8010, 
-"IpProtocol": "tcp", 
-"CidrIp": { "Ref" : "AdminCIDR" },
 "FromPort": 8010
 }, 
 {
@@ -355,6 +353,12 @@
 "IpProtocol": "tcp", 
 "CidrIp": "10.0.0.0/16",
 "FromPort": 8145
+}, 
+{
+"ToPort": 22, 
+"IpProtocol": "tcp", 
+"CidrIp": { "Ref" : "HMSCIDR" },
+"FromPort": 22
 }, 
 {
 "ToPort": 22, 
@@ -416,7 +420,6 @@
 "InstanceType" : {
 "Ref" : "BastionInstanceType"
 },
-"KeyName" : {"Ref" : "BastionDefaultKeyPair" },
 "NetworkInterfaces": [ {
 "AssociatePublicIpAddress": "true",
 "DeviceIndex": "0",
@@ -663,21 +666,7 @@
 ]
 ]
 },
-"echo SCRIPT: COMPLETED installPublicKeyGottenFromMaster.pl",
-
-"echo SCRIPT: START getResourceIdsAndTagWithRequired.pl",
-{
-"Fn::Join" : [
-" ", 
-[
-"/home/$sshuser/getResourceIdsAndTagWithRequired.pl", 
-{ "Ref": "AWS::StackName" }, 
-{ "Ref" : "AWS::Region" },
-{ "Ref" : "MyEmailAddress" }
-]
-]
-},
-"echo SCRIPT: COMPLETED getResourceIdsAndTagWithRequired.pl"
+"echo SCRIPT: COMPLETED installPublicKeyGottenFromMaster.pl"
 ]
 ]
 }
@@ -1579,6 +1568,8 @@
 "chmod 755 /home/$sshuser/*.pl",
 "chmod 755 /home/$sshuser/*s3",
 "chmod 755 /home/$sshuser/*.py",
+"chmod 755 /home/$sshuser/lzmount",
+"chmod 755 /home/$sshuser/exec_lzmount",
 "chmod 400 /home/$sshuser/*.pem",
 "chown $sshuser:$sshuser /home/$sshuser/StopStartHPCC/*",
 "chmod 755 /home/$sshuser/StopStartHPCC/*.sh",
@@ -1688,7 +1679,23 @@
 ]
 ]
 },
-"echo SCRIPT: 'Done signaling stack that setup of HPCC System has completed.'"
+"echo SCRIPT: 'Done signaling stack that setup of HPCC System has completed.'",
+
+"echo SCRIPT: START setupForMountS3OnLZ.sh",
+"/home/$sshuser/setupForMountS3OnLZ.sh", 
+"echo SCRIPT: COMPLETED setupForMountS3OnLZ.sh",
+
+"echo SCRIPT: START getResourceIdsAndTagWithRequired.pl",
+{
+"Fn::Join" : [
+" ", 
+[
+"/home/$sshuser/getResourceIdsAndTagWithRequired.pl", 
+{ "Ref" : "MyEmailAddress" }
+]
+]
+},
+"echo SCRIPT: COMPLETED getResourceIdsAndTagWithRequired.pl"
 ]
 ]
 }

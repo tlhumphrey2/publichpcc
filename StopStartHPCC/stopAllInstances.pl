@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 #===================================================================
-# NOTE: This scripts REQUIRES the aws cli be installed and configured.
+# NOTE: This script REQUIRES the aws cli be installed and configured.
 #===================================================================
 =pod
 
@@ -60,30 +60,56 @@ else{
 }
 
 my @asgname_and_instances=();
+my @all_instance_ids = ();
+# Get instance ids in the 3 asgs. put them is @all_instance_ids and in @asgname_and_instances.
 foreach my $asgname (@asgnames){
 
   # Get asg description for $asgname
   my @asg=grep(/$asgname/s,@asg_description);
   my @asg_instance_id=ArrayOfValuesForKey('InstanceId',@asg);
-#  print join("\n",@asg_instance_id),"\n";# exit;# DEBUG DEBUG DEBUG
+  push @all_instance_ids, @asg_instance_id if scalar(@asg_instance_id) > 0;
+  print "\@asg_instance_id=)",join(", ",@asg_instance_id),")\n";# exit;# DEBUG DEBUG DEBUG
 
   # Push current asg name and all its instances to @asgname_and_instances
   my $asg_instance_ids=join(",",@asg_instance_id);
   my $dt=formatDateTimeString(); print("$dt Push onto \@asgname_and_instances this asg's name and all its instances:$asgname:$asg_instance_ids\n"); 
   push  @asgname_and_instances, "$asgname:$asg_instance_ids";
+}
 
-  foreach my $asg_instance_id (@asg_instance_id){
+print "DEBUG: \@all_instance_ids=(",join(", ",@all_instance_ids),")\n";
 
-    # Stop Instance
-    my $dt=formatDateTimeString(); print("$dt STOP instance=$asg_instance_id\n");
-    my $dt=formatDateTimeString(); print("$dt aws ec2 stop-instances --instance-ids $asg_instance_id --region $region\n");
-    my $rc=`aws ec2 stop-instances --instance-ids $asg_instance_id --region $region`;
+# Send an initial stop to all instances
+foreach my $instance_id (@all_instance_ids){
 
-    if ( $rc !~ /StoppingInstances/s ){
-      my $dt=formatDateTimeString(); die "$dt FATAL ERROR. While attempting to stop instance, \"$asg_instance\". Contact Tim Humphrey. EXITING. \n";
+  my $dt=formatDateTimeString(); print("$dt STOP instance=$instance_id\n");
+  my $rc=`aws ec2 stop-instances --instance-ids $instance_id --region $region`;
+}
+
+# Don't leave until every instance is stopped.
+foreach my $instance_id (@all_instance_ids){
+
+  STOPINSTANCE:
+  # Stop Instance
+  my $dt=formatDateTimeString(); print("$dt aws ec2 stop-instances --instance-ids $instance_id --region $region\n");
+  my $rc=`aws ec2 stop-instances --instance-ids $instance_id --region $region`;
+  $rc =~ s/\n/ /sg;
+
+  if ( $rc !~ /StoppingInstances/s ){
+    my $dt=formatDateTimeString(); die "$dt FATAL ERROR. While attempting to stop instance, \"$asg_instance\". Contact Tim Humphrey. EXITING. \n";
+    exit;
+  }
+  if ( $stackname =~ /mhpcc\-/ ){
+    if ( $rc =~ /CurrentState": *. *"Code": *80, *"Name": *"stopped"/s ){
+	  $stopped{$instance_id}=1;
+	  print "DEBUG: After stopping $instance_id, \$stopped\{$instance_id\} is 1.\n";
+    }
+    else{
+	  sleep(10);
+	  goto "STOPINSTANCE";
     }
   }
 }
+print "All cluster instances are stopped.\n";
 #===========================================================
 sub ArrayOfValuesForKey{
 my ($key,@asg_descriptions)=@_;
@@ -113,4 +139,3 @@ my @y=split(/\n( +)\},\s*\n/s,$x);
 
 return @y;
 }
-#===========================================================

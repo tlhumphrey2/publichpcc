@@ -1,0 +1,73 @@
+{
+    "Addresses": [
+        {
+            "Domain": "vpc", 
+            "PublicIpv4Pool": "amazon", 
+            "Tags": [
+                {
+                    "Value": "eksctl-hpcc3-cluster", 
+                    "Key": "aws:cloudformation:stack-name"
+                }, 
+                {
+                    "Value": "xiaoming.wang@lexisnexis.com", 
+                    "Key": "support_email"
+                }, 
+                {
+                    "Value": "test-amazon-linux2-with-gpu-drivers6", 
+                    "Key": "Name"
+                }, 
+                {
+                    "Value": "hpccsystems", 
+                    "Key": "market"
+                }, 
+                {
+                    "Value": "xiaoming.wang@lexisnexis.com", 
+                    "Key": "owner_email"
+                }, 
+                {
+                    "Value": "hpcc3", 
+                    "Key": "alpha.eksctl.io/cluster-name"
+                }, 
+                {
+                    "Value": "hpccsystems", 
+                    "Key": "application"
+                }, 
+                {
+                    "Value": "arn:aws:cloudformation:us-east-1:633162230041:stack/eksctl-hpcc3-cluster/21c2bf40-7e61-11ea-99e4-0acf59e535ed", 
+                    "Key": "aws:cloudformation:stack-id"
+                }, 
+                {
+                    "Value": "hpccsystems", 
+                    "Key": "product"
+                }, 
+                {
+                    "Value": "dev", 
+                    "Key": "lifecycle"
+                }, 
+                {
+                    "Value": "ecs", 
+                    "Key": "service"
+                }, 
+                {
+                    "Value": "hpcc builds", 
+                    "Key": "project"
+                }, 
+                {
+                    "Value": "NATIP", 
+                    "Key": "aws:cloudformation:logical-id"
+                }, 
+                {
+                    "Value": "hpcc3", 
+                    "Key": "eksctl.cluster.k8s.io/v1alpha1/cluster-name"
+                }
+            ], 
+            "NetworkInterfaceId": "eni-08d8aa25ef99744f7", 
+            "AssociationId": "eipassoc-0dce197df0736340b", 
+            "NetworkInterfaceOwnerId": "633162230041", 
+            "PublicIp": "18.209.39.62", 
+            "AllocationId": "eipalloc-053106b4cd66aef0d", 
+            "PrivateIpAddress": "192.168.14.230", 
+            "NetworkBorderGroup": "us-east-1"
+        }
+    ]
+}

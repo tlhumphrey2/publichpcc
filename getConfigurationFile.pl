@@ -1,11 +1,8 @@
 #!/usr/bin/perl
 #getConfigurationFile.pl
-local $ThisDir=($0=~/^(.*)\//)? $1 : ".";
+$ThisDir = ($0=~/^(.*)\//)? $1 : "."; $ThisDir = `cd $ThisDir;pwd`; chomp $ThisDir;
 
-my $home = ( ($ThisDir =~ /^\/home\/[^\/]+\/[^\/]+$/) || ($ThisDir =~ /^[^\/]+\/?$/ ) )? "$ThisDir/.." : $ThisDir;
-print "DEBUG: In getConfigurationFile.pl. home=\"$home\"\n";
-
-$cfgfile="$home/cfg_BestHPCC.sh";
+$cfgfile="$ThisDir/cfg_BestHPCC.sh";
 open(CFG,$cfgfile) || die "Can't open for input cfgfile=\"$cfgfile\"\n";
 while(<CFG>){
    chomp;
@@ -21,7 +18,7 @@ while(<CFG>){
       $env_variable{$env_variable}=$value;
    }
    else{
-     print "ERROR: UNEXPECTED PATTERN IN \"$cfgfile\": \"$_\"\n";
+     print STDERR "ERROR: UNEXPECTED PATTERN IN \"$cfgfile\": \"$_\"\n";
    }
 }
 close(CFG);

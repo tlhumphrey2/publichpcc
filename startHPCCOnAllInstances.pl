@@ -4,7 +4,7 @@ require "$ThisDir/getConfigurationFile.pl";
 require "$ThisDir/common.pl";
 print "Entering startHPCCOnAllInstances.pl. pem=\"$pem\"\n";
 
-# Master doesn't exist of $master_exists is blank.
+# Master doesn't exist if $master_exists is blank, i.e. if the file, master-created, is not in s3 bucket.
 $master_exists=`aws s3 ls s3://$stackname/master-created`;
 
 # If this instance is Master OR Master already exists and no instance is down (meaning this instance is newly added non-master instance)

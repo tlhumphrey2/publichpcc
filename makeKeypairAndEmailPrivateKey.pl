@@ -7,7 +7,7 @@ WHAT THIS SCRIPT DOES:
 1. Gets the input arguments: sshuser, stackname, destination email address, and private key file (as outputted by "aws ec2 create-key-pair")
 2. Make s3 bucket whose name is $stackname (all lower case).
 3. Create keypair named $stackname, using create-key-pair, and put private key in $stackname.pem.
-4. Make EIP for the Master instance.
+4. Make EIP for the Master and Bastion instances and associate bastion EIP with bastion.
 5. Converts both the destination email address and private key to the form needed for emailing puts both in files.
 6. Checks to see if the destination email has been verified. If it hasn't it asked for it to be verified and waits for it to be verified.
 7. Send an email to the destination email address which contains the private key.
@@ -50,6 +50,9 @@ my $s3bucket=$stackname; $s3bucket =~ s/([A-Z]+)/\L$1/g;
 print "In $0: aws s3 mb s3://$s3bucket\n";
 my $rc=`aws s3 mb s3://$s3bucket 2>&1`;
 print "Make Bucket rc=\"$rc\"\n";
+print "In $0: aws s3api put-bucket-encryption --bucket $s3bucket --server-side-encryption-configuration '{\"Rules\": [{\"ApplyServerSideEncryptionByDefault\": {\"SSEAlgorithm\": \"AES256\"}}]}'\n";
+my $rc=`aws s3api put-bucket-encryption --bucket $s3bucket --server-side-encryption-configuration '{"Rules": [{"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}]}' 2>&1`;
+print "put-bucket-encryption rc=\"$rc\"\n";
 
 # Also, put destination_email in a file and put the file is the s3bucket, $s3bucket
 my $d=$destination_email; $d =~ s/\@/\\\@/;
@@ -77,9 +80,15 @@ $_=`chown $sshuser:$sshuser /home/$sshuser/$stackname.pem`;
 print "chown $sshuser:$sshuser $stackname.pem rc=\"$_\"\n";
 
 #---------------------------------------------------------------------------
-print "In $0. 4. Make EIP for Master instance.\n";
-my $EIP=makeEIP($region,$stackname,$s3bucket);
+print "In $0. 4a. Make EIP for Master instance and bastion. Put both in s3 bucket, $stackname.\n";
+my ($EIP, $EIPAllocationId) = makeEIP($region,$stackname,$s3bucket);
+my ($bastionEIP, $bastionEIPAllocationId) = makeEIP($region,$stackname,$s3bucket,'bastion_');
 
+print "In $0. 4b. Associate $bastionEIP with bastion.\n";
+$BastionInstanceId = `curl http://169.254.169.254/latest/meta-data/instance-id`; chomp $BastionInstanceId;
+print "aws ec2 associate-address --instance-id $BastionInstanceId --allocation-id $bastionEIPAllocationId --region $region";
+$rc=`aws ec2 associate-address --instance-id $BastionInstanceId --allocation-id $bastionEIPAllocationId --region $region`;
+print "In $0. associate-address rc=\"$rc\"\n";
 #---------------------------------------------------------------------------
 print "In $0. 5. Converts both the destination email address and private key to the form needed for emailing puts both in files.\n";
 # Convert private key to form needed for sending email.

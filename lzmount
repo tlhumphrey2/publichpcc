@@ -1,0 +1,339 @@
+#!/bin/bash
+
+export PATH=/usr/local/bin:$PATH
+
+INSTALL_DIR=/opt/HPCCSystems
+CONFIG_DIR=/etc/HPCCSystems
+ENV_XML_FILE=environment.xml
+ENV_CONF_FILE=environment.conf
+PID_DIR=/var/run/HPCCSystems
+LOCK_DIR=/var/lock/HPCCSystems
+LOG_DIR=/var/log/HPCCSystems
+INIT_PATH=/etc/init.d
+
+source  ${INSTALL_DIR}/etc/init.d/hpcc_common
+source  ${INSTALL_DIR}/etc/init.d/init-functions
+source  ${INSTALL_DIR}/etc/init.d/export-path
+
+LZ_PATH=`${INSTALL_DIR}/sbin/configgen -env ${CONFIG_DIR}/${ENV_XML_FILE} -listdropzones | awk -F, '{print $2}'  | sort | uniq`
+
+#-------------------------------------------------------------------------------
+
+function usage()
+{
+    local PROG_NAME=`basename $1`
+
+    echo
+    echo "${PROG_NAME} s3 <bucket_name_or_url> [<password_file_path>]"
+    echo "${PROG_NAME} archive <archive_path>"
+    echo "${PROG_NAME} ssh <user@domain:/dir> <identity_file_path>"
+    echo "${PROG_NAME} unmount <bucket_name_or_url>|<archive_path>|<ssh_url>|all"
+    echo
+    exit
+}
+
+#-------------------------------------------------------------------------------
+
+function fullDirFromSSHURL()
+{
+    local SSH_URL="$1"
+
+    local SSH_USER=`echo "${SSH_URL}" | awk -F@ '{print $1}'`
+    local SSH_DOMAIN=`echo "${SSH_URL}" | awk -F@ '{print $2}' | awk -F: '{print $1}'`
+    local SSH_DIR=`echo "${SSH_URL}" | awk -F@ '{print $2}' | awk -F: '{print $2}'`
+
+    local SSH_DIR_BASE=`basename "${SSH_DIR}"`
+
+    if [ -n "${SSH_USER}" ] && [ -n "${SSH_DOMAIN}" ] && [ -n "${SSH_DIR}" ]; then
+        local CONSTRUCTED_PATH="${LZ_PATH}/${SSH_DOMAIN}_${SSH_DIR_BASE}"
+    else
+        local CONSTRUCTED_PATH=""
+    fi
+
+    echo "${CONSTRUCTED_PATH}"
+}
+
+#-------------------------------------------------------------------------------
+
+function mountedS3
+{
+    local MTAB=/etc/mtab
+
+    if [ -f "${MTAB}" ]; then
+        local S3FS_ITEMS=`grep -P "fuse\.s3fs" ${MTAB} | awk -F" " '{print $2}' | awk -F"/" '{print $NF}'`
+    fi
+
+    echo "${S3FS_ITEMS}"
+}
+
+#-------------------------------------------------------------------------------
+
+function mountedSSH
+{
+    local MTAB=/etc/mtab
+
+    if [ -f "${MTAB}" ]; then
+        local SSHFS_ITEMS=`grep -P "fuse\.sshfs" ${MTAB} | awk -F" " '{print $1}'`
+    fi
+
+    echo "${SSHFS_ITEMS}"
+}
+
+#-------------------------------------------------------------------------------
+
+function mountedArchive
+{
+    local MTAB=/etc/mtab
+
+    if [ -f "${MTAB}" ]; then
+        local ARCHIVE_ITEMS=`grep -P "fuse\.archivemount" ${MTAB} | awk -F" " '{print $2}' | awk -F"/" '{print $NF}'`
+    fi
+
+    echo "${ARCHIVE_ITEMS}"
+}
+
+#-------------------------------------------------------------------------------
+
+function mountS3
+{
+    local BUCKET_NAME=`echo "$1" | sed -e 's|s3://||'`
+
+    if [ -z "${BUCKET_NAME}" ]; then
+        echo "Error: S3 bucket name not provided"
+        exit
+    fi
+
+    local FULLDIR="${LZ_PATH}/${BUCKET_NAME}"
+
+    if [ -d ${FULLDIR} ]; then
+        echo "Error: ${FULLDIR} already exists"
+        exit
+    fi
+
+    local S3FS=`which s3fs`
+
+    if [ -z "${S3FS}" ]; then
+        echo "Error: s3fs binary not found in PATH"
+        exit
+    fi
+
+    local OPTIONAL_PW_PATH="$2"
+    if [ -n "${OPTIONAL_PW_PATH}" ]; then
+        local OPTIONAL_PW_PATH="-o passwd_file=${OPTIONAL_PW_PATH}"
+    fi
+
+    mkdir "${FULLDIR}"
+    ${S3FS} ${BUCKET_NAME} "${FULLDIR}" ${OPTIONAL_PW_PATH} -o mp_umask=022
+
+    local RET_VALUE=$?
+    if [ ${RET_VALUE} -eq 0 ]; then
+        echo "Mounted at ${FULLDIR}"
+    else
+        echo "Failed with code ${RET_VALUE}"
+        exit ${RET_VALUE}
+    fi
+}
+
+#-------------------------------------------------------------------------------
+
+function mountArchive
+{
+    local ARCHIVE_PATH="$1"
+
+    if [ ! -f ${ARCHIVE_PATH} ]; then
+        echo "Error: ${ARCHIVE_PATH} is not a file or does not exist"
+        exit
+    fi
+
+    local ARCHIVE_BASENAME=`basename "${ARCHIVE_PATH}"`
+
+    local FULLDIR="${LZ_PATH}/${ARCHIVE_BASENAME}"
+
+    if [ -d ${FULLDIR} ]; then
+        echo "Error: ${FULLDIR} already exists"
+        exit
+    fi
+
+    local ARCHIVEMOUNT=`which archivemount`
+
+    if [ -z "${ARCHIVEMOUNT}" ]; then
+        echo "Error: archivemount binary not found in PATH"
+        exit
+    fi
+
+    mkdir "${FULLDIR}"
+    ${ARCHIVEMOUNT} "${ARCHIVE_PATH}" "${FULLDIR}" -o readonly
+
+    local RET_VALUE=$?
+    if [ ${RET_VALUE} -eq 0 ]; then
+        echo "Mounted at ${FULLDIR}"
+    else
+        echo "Failed with code ${RET_VALUE}"
+        exit ${RET_VALUE}
+    fi
+}
+
+#-------------------------------------------------------------------------------
+
+function mountSSH
+{
+    local SSH_URL="$1"
+
+    if [ -z "${SSH_URL}" ]; then
+        echo "Error: SSH URL not provided"
+        exit
+    fi
+
+    local IDENTITY_FILE_PATH="$2"
+
+    if [ -z "${IDENTITY_FILE_PATH}" ]; then
+        echo "Error: Identify file path not provided"
+        exit
+    fi
+    local IDENTITY_FILE_OPT="-o IdentityFile=${IDENTITY_FILE_PATH}"
+
+    local FULLDIR=$(fullDirFromSSHURL "${SSH_URL}")
+
+    if [ -z "${FULLDIR}" ]; then
+        echo "Error: SSH URL not in the right format (user@domain:/dir)"
+        exit
+    fi
+
+    if [ -d ${FULLDIR} ]; then
+        echo "Error: ${FULLDIR} already exists"
+        exit
+    fi
+
+    local SSHFS=`which sshfs`
+
+    if [ -z "${SSHFS}" ]; then
+        echo "Error: sshfs binary not found in PATH"
+        exit
+    fi
+
+    mkdir "${FULLDIR}"
+    ${SSHFS} "${SSH_URL}" "${FULLDIR}" ${IDENTITY_FILE_OPT}
+
+    local RET_VALUE=$?
+    if [ ${RET_VALUE} -eq 0 ]; then
+        echo "Mounted at ${FULLDIR}"
+    else
+        echo "Failed with code ${RET_VALUE}"
+        exit ${RET_VALUE}
+    fi
+}
+
+#-------------------------------------------------------------------------------
+
+function doUnmount
+{
+    local ITEM=`echo "$1" | sed -e 's|s3://||'`
+
+    if [ -z "${ITEM}" ]; then
+        echo "Error: mountable reference not provided"
+        exit
+    fi
+
+    local FROM_SSH_URL=$(fullDirFromSSHURL "${ITEM}")
+    if [ -n "${FROM_SSH_URL}" ]; then
+        local FULLDIR="${FROM_SSH_URL}"
+    else
+        local SUBDIR_BASE=`basename "${ITEM}"`
+        local FULLDIR="${LZ_PATH}/${SUBDIR_BASE}"
+    fi
+
+    if [ ! -d "${FULLDIR}" ]; then
+        echo "Error: ${FULLDIR} not found"
+        exit
+    fi
+
+    local FUSERMOUNT=`which fusermount`
+
+    if [ -z "${FUSERMOUNT}" ]; then
+        echo "Error: fusermount binary not found in PATH; cannot unmount"
+        exit
+    fi
+
+    ${FUSERMOUNT} -u "${FULLDIR}"
+
+    local RET_VALUE=$?
+    if [ ${RET_VALUE} -eq 0 ]; then
+        echo "${FULLDIR} unmounted"
+        rmdir "${FULLDIR}"
+    else
+        echo "Failed with code ${RET_VALUE}"
+        exit ${RET_VALUE}
+    fi
+}
+
+#-------------------------------------------------------------------------------
+
+function doUnmountAll
+{
+	local S3FS_ITEMS=$(mountedS3)
+	local SSHFS_ITEMS=$(mountedSSH)
+	local ARCHIVE_ITEMS=$(mountedArchive)
+    local ALL_MOUNTED=(${S3FS_ITEMS[@]} ${SSHFS_ITEMS[@]} ${ARCHIVE_ITEMS[@]})
+
+    for MOUNTED_ITEM in "${ALL_MOUNTED[@]}"
+    do
+        doUnmount "${MOUNTED_ITEM}"
+    done
+}
+
+#-------------------------------------------------------------------------------
+
+function showMounted
+{
+    echo
+
+    local S3FS_ITEMS=$(mountedS3)
+    echo "S3:"
+    echo "${S3FS_ITEMS}"
+    echo
+
+    local SSHFS_ITEMS=$(mountedSSH)
+    echo "SSH:"
+    echo "${SSHFS_ITEMS}"
+    echo
+
+    local ARCHIVE_ITEMS=$(mountedArchive)
+    echo "Archives:"
+    echo "${ARCHIVE_ITEMS}"
+    echo
+}
+
+#-------------------------------------------------------------------------------
+# Main
+#-------------------------------------------------------------------------------
+SUBCOMMAND=$1
+SUBCOMMAND_ARG1=$2
+
+if [ "${USER}" != "hpcc" ]; then
+    echo
+    echo "This script must be run under the hpcc user"
+    SUBCOMMAND="--help"
+fi
+
+case "${SUBCOMMAND}" in
+    s3)
+        mountS3 ${SUBCOMMAND_ARG1} $3
+        ;;
+    archive)
+        mountArchive ${SUBCOMMAND_ARG1}
+        ;;
+    ssh)
+        mountSSH ${SUBCOMMAND_ARG1} $3
+        ;;
+    unmount)
+        if [ "${SUBCOMMAND_ARG1}" = "all" ]; then
+            doUnmountAll
+        else
+            doUnmount ${SUBCOMMAND_ARG1}
+        fi
+        ;;
+    list)
+        showMounted
+        ;;
+    *) usage $0;;
+esac

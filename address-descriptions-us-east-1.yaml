@@ -1,0 +1,133 @@
+Addresses:
+- AllocationId: eipalloc-053106b4cd66aef0d
+  AssociationId: eipassoc-0dce197df0736340b
+  Domain: vpc
+  NetworkBorderGroup: us-east-1
+  NetworkInterfaceId: eni-08d8aa25ef99744f7
+  NetworkInterfaceOwnerId: '633162230041'
+  PrivateIpAddress: 192.168.14.230
+  PublicIp: 18.209.39.62
+  PublicIpv4Pool: amazon
+  Tags:
+  - {Key: 'aws:cloudformation:stack-name', Value: eksctl-hpcc3-cluster}
+  - {Key: support_email, Value: xiaoming.wang@lexisnexis.com}
+  - {Key: Name, Value: test-amazon-linux2-with-gpu-drivers6}
+  - {Key: market, Value: hpccsystems}
+  - {Key: owner_email, Value: xiaoming.wang@lexisnexis.com}
+  - {Key: alpha.eksctl.io/cluster-name, Value: hpcc3}
+  - {Key: application, Value: hpccsystems}
+  - {Key: 'aws:cloudformation:stack-id', Value: 'arn:aws:cloudformation:us-east-1:633162230041:stack/eksctl-hpcc3-cluster/21c2bf40-7e61-11ea-99e4-0acf59e535ed'}
+  - {Key: product, Value: hpccsystems}
+  - {Key: lifecycle, Value: dev}
+  - {Key: service, Value: ecs}
+  - {Key: project, Value: hpcc builds}
+  - {Key: 'aws:cloudformation:logical-id', Value: NATIP}
+  - {Key: eksctl.cluster.k8s.io/v1alpha1/cluster-name, Value: hpcc3}
+- AllocationId: eipalloc-031ddddd1c039ff3c
+  AssociationId: eipassoc-043bffb4d43d6c1f2
+  Domain: vpc
+  InstanceId: i-033014e5af992b21c
+  NetworkBorderGroup: us-east-1
+  NetworkInterfaceId: eni-010ae78406fb99906
+  NetworkInterfaceOwnerId: '633162230041'
+  PrivateIpAddress: 172.30.4.42
+  PublicIp: 18.233.241.237
+  PublicIpv4Pool: amazon
+  Tags:
+  - {Key: Name, Value: CloudLauncher-Dev-EIP}
+- {AllocationId: eipalloc-48933a31, AssociationId: eipassoc-977460ed, Domain: vpc,
+  InstanceId: i-858ad51f, NetworkBorderGroup: us-east-1, NetworkInterfaceId: eni-9ba0d9c9,
+  NetworkInterfaceOwnerId: '633162230041', PrivateIpAddress: 10.60.4.11, PublicIp: 23.20.164.66,
+  PublicIpv4Pool: amazon}
+- AllocationId: eipalloc-07bd339f9cf9c733c
+  AssociationId: eipassoc-0adbf39cd3d56787b
+  Domain: vpc
+  InstanceId: i-08b19c06e96d94498
+  NetworkBorderGroup: us-east-1
+  NetworkInterfaceId: eni-044b1dd7079bf8fbe
+  NetworkInterfaceOwnerId: '633162230041'
+  PrivateIpAddress: 172.30.4.200
+  PublicIp: 3.222.121.2
+  PublicIpv4Pool: amazon
+  Tags:
+  - {Key: Name, Value: make-2-changes-to-IC}
+- AllocationId: eipalloc-0526bcd599308f00e
+  AssociationId: eipassoc-011de9ab2f24c5d1f
+  Domain: vpc
+  InstanceId: i-07d57d385834b36af
+  NetworkBorderGroup: us-east-1
+  NetworkInterfaceId: eni-0100ae44a6f94010b
+  NetworkInterfaceOwnerId: '633162230041'
+  PrivateIpAddress: 10.0.0.32
+  PublicIp: 50.19.103.180
+  PublicIpv4Pool: amazon
+  Tags:
+  - {Key: application, Value: hpccsystems}
+  - {Key: lifecycle, Value: dev}
+  - {Key: product, Value: hpccsystems}
+  - {Key: support_email, Value: timothy.humphrey@lexisnexisrisk.com}
+  - {Key: owner_email, Value: timothy.humphrey@lexisnexisrisk.com}
+  - {Key: Name, Value: CloudLauncher-Prod-EIP}
+  - {Key: project, Value: CloudLauncher-Prod-EIP}
+  - {Key: service, Value: elastic-ip}
+  - {Key: market, Value: hpccsystems}
+- {AllocationId: eipalloc-00babdf4ee8a72e30, AssociationId: eipassoc-0c3b00bdb64d0005d,
+  Domain: vpc, InstanceId: i-01339d8c2cf011880, NetworkBorderGroup: us-east-1, NetworkInterfaceId: eni-02d90f9c3a086bbf5,
+  NetworkInterfaceOwnerId: '633162230041', PrivateIpAddress: 10.0.0.73, PublicIp: 52.1.32.158,
+  PublicIpv4Pool: amazon}
+- AllocationId: eipalloc-11d6c72b
+  AssociationId: eipassoc-19125d23
+  Domain: vpc
+  InstanceId: i-473bb8d7
+  NetworkBorderGroup: us-east-1
+  NetworkInterfaceId: eni-77e6ad6f
+  NetworkInterfaceOwnerId: '633162230041'
+  PrivateIpAddress: 10.60.4.134
+  PublicIp: 52.205.217.93
+  PublicIpv4Pool: amazon
+  Tags:
+  - {Key: market, Value: hpccsystems}
+  - {Key: application, Value: hpccsystems}
+  - {Key: support_email, Value: timothy.humphrey@lexisnexisrisk.com}
+  - {Key: project, Value: ReedExpo}
+  - {Key: product, Value: hpccsystems}
+  - {Key: lifecycle, Value: dev}
+  - {Key: owner_email, Value: timothy.humphrey@lexisnexisrisk.com}
+  - {Key: service, Value: elastic-ip}
+  - {Key: Name, Value: ReedExpo}
+- {AllocationId: eipalloc-0bd620c9fa5aeea19, Domain: vpc, NetworkBorderGroup: us-east-1,
+  PublicIp: 52.206.178.201, PublicIpv4Pool: amazon}
+- AllocationId: eipalloc-268d5e40
+  AssociationId: eipassoc-f131068a
+  Domain: vpc
+  NetworkBorderGroup: us-east-1
+  NetworkInterfaceId: eni-a9296af9
+  NetworkInterfaceOwnerId: '633162230041'
+  PrivateIpAddress: 10.60.4.231
+  PublicIp: 52.71.151.115
+  PublicIpv4Pool: amazon
+  Tags:
+  - {Key: support_email, Value: timothy.humphrey@lexisnexisrisk.com}
+  - {Key: owner_email, Value: timothy.humphrey@lexisnexisrisk.com}
+  - {Key: service, Value: elastic-ip}
+  - {Key: lifecycle, Value: dev}
+  - {Key: product, Value: hpccsystems}
+  - {Key: project, Value: ''}
+  - {Key: application, Value: hpccsystems}
+  - {Key: market, Value: hpccsystems}
+  - {Key: Name, Value: ''}
+- {AllocationId: eipalloc-77745f11, Domain: vpc, NetworkBorderGroup: us-east-1, PublicIp: 52.87.143.150,
+  PublicIpv4Pool: amazon}
+- AllocationId: eipalloc-0671cd68207e709d0
+  AssociationId: eipassoc-09d4661e6b9a94d74
+  Domain: vpc
+  InstanceId: i-0e389c9fa0248d1f9
+  NetworkBorderGroup: us-east-1
+  NetworkInterfaceId: eni-024f5f52a1a3d9d3e
+  NetworkInterfaceOwnerId: '633162230041'
+  PrivateIpAddress: 10.0.0.200
+  PublicIp: 54.82.213.204
+  PublicIpv4Pool: amazon
+  Tags:
+  - {Key: Name, Value: HMS-For-Testing}
+
