@@ -1473,16 +1473,13 @@
 ]
 },
 "echo TLH: sshuser=\"$sshuser\"",
-"# Step 3. cp contents of public s3 bucket, s3://publichpcc, to /home/$sshuser",
-{
-"Fn::Join" : [
-" ", 
-[
-"aws s3 cp s3://publichpcc", 
-"/home/$sshuser --recursive"
-]
-]
-},
+"# Step 3. DOWNLOAD THE CONTENTS OF github repo, https://github.com/tlhumphrey2/publichpcc",
+"echo yum install git -y",
+"yum install git -y",
+"echo git clone https://github.com/tlhumphrey2/publichpcc.git /home/$sshuser",
+"git clone https://github.com/tlhumphrey2/publichpcc.git /home/$sshuser/publichpcc",
+"echo mv -v /home/$sshuser/publichpcc contents to /home/$sshuser",
+"mv -v /home/$sshuser/publichpcc/* /home/$sshuser",
 "# Step 4. Set ownership and permissions",
 "chown $sshuser:$sshuser /home/$sshuser/*",
 "chmod 755 /home/$sshuser/*.sh",
