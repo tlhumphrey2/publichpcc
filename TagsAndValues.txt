@@ -6,3 +6,4 @@ application=hpccsystems
 lifecycle=dev
 owner_email=timothy.humphrey@lexisnexisrisk.com
 support_email=timothy.humphrey@lexisnexisrisk.com
+data=non-reg
