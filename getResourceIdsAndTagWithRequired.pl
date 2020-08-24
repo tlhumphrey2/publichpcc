@@ -64,11 +64,14 @@ my @idline=split(/\n/,$idescriptions);
 
 # 2. Extract ids of all autoscaling groups and put in a file. Then, run the ASG tagger, tagASGs.sh to tag all of them.
 print "Extract ids of all autoscaling groups and put in a file. Then, run the ASG tagger, tagASGs.sh to tag all of them.\n";
-my @asg_id = grep(/$stackname-(?:Master|Slave|Roxie)ASG\-/,@idline);
-@asg_id = grep(s/^\s+"Value": "//,@asg_id);
-@asg_id = grep(s/",\s*$//,@asg_id);
-@asg_id = sort @asg_id;
-@asg_id = uniq(@asg_id);
+$_ = `aws autoscaling describe-auto-scaling-groups --region $region|egrep "AutoScalingGroupName.: .$stackname"|cut -d: -f 2`;
+@asg_id = m/($stackname-[^"]+)/sg;
+=pod
+#Contents of $_ will look like the following:
+ "mhpcc-ca-central-1-ndw-219-MasterASG-1493DNXL0HFZN", 
+ "mhpcc-ca-central-1-ndw-219-RoxieASG-1WEBICIY37T9H", 
+ "mhpcc-ca-central-1-ndw-219-SlaveASG-1WU8ITYEZWN5C", 
+=cut
 open(OUT,">$stackname-autoscaling-groups-$region.txt") || die "Can't open for output: \"$stackname-autoscaling-groups-$region.txt\"\n";
 print OUT join("\n",@asg_id),"\n";
 close(OUT);
