@@ -1326,7 +1326,7 @@
 "CreationPolicy": {
 "ResourceSignal": {
 "Count" : 1,
-"Timeout": "PT15M"
+"Timeout": "PT25M"
 }
 }
 },
