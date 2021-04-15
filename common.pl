@@ -609,13 +609,14 @@ my ($stackname, $MasterEIP)=@_;
   my @line=split(/\n+/,$_);
 
   # Check status of each component
+  my $NumberRunning=0;
   foreach (@line){
     if ( /\b($re_component)\b.* is running/ ){
       $Running{$1}=1;
+      $NumberRunning++;
     }
   }
 
-  my $NumberRunning=scalar(keys %Running);
   my $NumberComponents=scalar(@component);
   my $message='UNKNOWN';
   if ( $NumberRunning == $NumberComponents ) {
