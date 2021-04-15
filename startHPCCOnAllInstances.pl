@@ -13,9 +13,9 @@ if (($ThisClusterComponent eq 'Master')){
   if ( $restart ne 'restart' ){
     # This addition, 20210415, was created as a workaround for a problem with platform 8.
     print(" In $0. The following was addition, 20210415, was created as a workaround for a problem with platform 8.\n");
-    print(" In $0. sed -i 's/host\.ip\.decode.*/host\.ip/' /opt/HPCCSystems/sbin/hpcc/cluster/task.py\n");
-    $_=`sed -i 's/host\.ip\.decode.*/host\.ip/' /opt/HPCCSystems/sbin/hpcc/cluster/task.py 2>&1`;
-    print "In $0. Execution of sed to fix task.py rc=\"$_\"\n";
+    print(" In $0. $ThisDir/fix_taskpy.pl\n");
+    $_ =`$ThisDir/fix_taskpy.pl 2>&1`;
+    print "In $0. Execution of fix_taskpy.pl rc=\"$_\"\n";
   # Start the hpcc system
     print("In $0. /opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init start\n");
     $_=`/opt/HPCCSystems/sbin/hpcc-run.sh -a hpcc-init start 2>&1`;
