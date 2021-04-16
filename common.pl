@@ -611,7 +611,7 @@ my ($stackname, $MasterEIP)=@_;
   # Check status of each component
   my $NumberRunning=0;
   foreach (@line){
-    if ( /\b($re_component)\b.* is running/ ){
+    if ( /\b($re_component)\b.* is running/  && (! $Running{$1}) ){
       $Running{$1}=1;
       $NumberRunning++;
     }
