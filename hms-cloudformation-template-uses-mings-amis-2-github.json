@@ -1557,6 +1557,7 @@
 "/home/$sshuser/associate-eip.sh",
 "echo SCRIPT: completed associate-eip.sh",
 
+"sleep 10",
 "# Step 11. Change ssh keys used by hpcc system",
 "echo SCRIPT: Change ssh keys used by hpcc system.",
 "echo /opt/HPCCSystems/sbin/update-keys -g",
