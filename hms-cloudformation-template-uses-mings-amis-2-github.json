@@ -1557,6 +1557,11 @@
 "/home/$sshuser/associate-eip.sh",
 "echo SCRIPT: completed associate-eip.sh",
 
+"# Step 11. Change ssh keys used by hpcc system",
+"echo SCRIPT: Change ssh keys used by hpcc system.",
+"/opt/HPCCSystems/sbin/update-keys -g",
+"echo SCRIPT: Completed changing ssh keys used by hpcc system.",
+
 "# Step 11. if Cassandra should be installed, do so.",
 "echo SCRIPT: starting cassandra if installed",
 {
