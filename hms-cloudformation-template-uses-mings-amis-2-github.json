@@ -1559,6 +1559,7 @@
 
 "# Step 11. Change ssh keys used by hpcc system",
 "echo SCRIPT: Change ssh keys used by hpcc system.",
+"echo /opt/HPCCSystems/sbin/update-keys -g",
 "/opt/HPCCSystems/sbin/update-keys -g",
 "echo SCRIPT: Completed changing ssh keys used by hpcc system.",
 
