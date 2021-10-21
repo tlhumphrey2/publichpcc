@@ -77,18 +77,23 @@ my ($ebssize, $az, $region, $stackname, $ClusterComponent)=@_;
    print "DEBUG: makeebs=\"$makeebs\"\n";
    my $volumeid = ($makeebs=~/"VolumeId"\s*: "(vol-[^"]+)"/)? $1 : '';
 
-   # Wait until volume is available
-   print "In makeEBSVolume. aws ec2 describe-volumes --region $region --volume-ids $volumeid\n";
-   local $_=`aws ec2 describe-volumes --region $region --volume-ids $volumeid 2>&1`;
-   my $volume_available=(/"State"\s*:\s*"available"/s)? 1 : 0 ; 
-   my $c=0;
-   while ( ! $volume_available && ( $c <= 20 ) ){ 
-      $c++;   
-      print "In makeEBSVolume. $c. volume is not available, yet. WAITING.\n";
-      sleep 5;
-      print "In makeEBSVolme. aws ec2 describe-volumes --region $region --volume-ids $volumeid\n";
-      local $_=`aws ec2 describe-volumes --region $region --volume-ids $volumeid 2>&1`;
-      $volume_available=(/"State"\s*:\s*"available"/s)? 1 : 0 ; 
+   if ( $volumeid =~ /^vol\-/ ){
+     # Wait until volume is available
+     print "In makeEBSVolume. aws ec2 describe-volumes --region $region --volume-ids $volumeid\n";
+     local $_=`aws ec2 describe-volumes --region $region --volume-ids $volumeid 2>&1`;
+     my $volume_available=(/"State"\s*:\s*"available"/s)? 1 : 0 ; 
+     my $c=0;
+     while ( ! $volume_available && ( $c <= 20 ) ){ 
+       $c++;   
+       print "In makeEBSVolume. $c. volume is not available, yet. WAITING.\n";
+       sleep 5;
+       print "In makeEBSVolme. aws ec2 describe-volumes --region $region --volume-ids $volumeid\n";
+       local $_=`aws ec2 describe-volumes --region $region --volume-ids $volumeid 2>&1`;
+       $volume_available=(/"State"\s*:\s*"available"/s)? 1 : 0 ; 
+     }
+   }
+   else{
+     $volumeid = '';
    }
 
    print "In makeEBSVolume. Volume, $volumeid, is now available.\n";
