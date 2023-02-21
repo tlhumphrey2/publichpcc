@@ -1247,6 +1247,7 @@
 "echo SCRIPT: START 'sysctl -w net.core.wmem_max=1024002'",
 "echo This increases socket buffer size and eliminates roxie error when cluster starts.",
 "sysctl -w net.core.wmem_max=1024002",
+"echo -n \"Value of wmem_max is: \";cat /proc/sys/net/core/wmem_max",
 "echo SCRIPT: completed 'sysctl -w net.core.wmem_max=1024002'",
 
 "echo SCRIPT: 'START Signal stack that setup of  System is complete.'",
