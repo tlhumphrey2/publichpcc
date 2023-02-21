@@ -1248,9 +1248,8 @@
 "echo This increases socket buffer size and eliminates roxie error when cluster starts.",
 "sysctl -w net.core.wmem_max=1024002",
 "echo -n \"Value of wmem_max is: \";cat /proc/sys/net/core/wmem_max",
-"echo \"#!/bin/bash\" > /etc/init.d/set_wmem_max.sh",
-"echo \"sysctl -w net.core.wmem_max=1024002\" >> /etc/init.d/set_wmem_max.sh",
-"chmod 755 /etc/init.d/set_wmem_max.sh",
+"echo \"@reboot /home/ec2-user/set-wmem_max.sh\" > /home/ec2-user/mycron",
+"crontab -u ec2-user /home/ec2-user/mycron",
 "echo SCRIPT: completed 'sysctl -w net.core.wmem_max=1024002'",
 
 "echo SCRIPT: 'START Signal stack that setup of  System is complete.'",
